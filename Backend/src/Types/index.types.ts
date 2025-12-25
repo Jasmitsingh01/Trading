@@ -443,12 +443,15 @@ export interface IAdminActivityLog extends mongoose.Document {
   // Action details
   action: 'user_verified' | 'user_suspended' | 'balance_added' | 'balance_deducted' |
   'payment_approved' | 'payment_rejected' | 'kyc_approved' | 'kyc_rejected' |
-  'investment_modified' | 'account_deleted' | 'settings_changed';
+  'investment_modified' | 'account_deleted' | 'settings_changed' |
+  'update_order_status' | 'force_execute_order' | 'bulk_cancel_orders';
 
   targetUserId?: mongoose.Types.ObjectId;
+  targetType?: string;
+  targetId?: mongoose.Types.ObjectId;
 
   // Details
-  description: string;
+  description?: string;
   metadata?: {
     amount?: number;
     reason?: string;

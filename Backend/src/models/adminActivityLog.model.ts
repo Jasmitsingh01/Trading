@@ -5,12 +5,23 @@ const AdminActivityLogSchema: Schema = new Schema({
     adminId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 
     // Action details
-    action: { type: String, enum: ['user_verified', 'user_suspended', 'balance_added', 'balance_deducted', 'payment_approved', 'payment_rejected', 'kyc_approved', 'kyc_rejected', 'investment_modified', 'account_deleted', 'settings_changed'], required: true },
+    action: {
+        type: String,
+        enum: [
+            'user_verified', 'user_suspended', 'balance_added', 'balance_deducted',
+            'payment_approved', 'payment_rejected', 'kyc_approved', 'kyc_rejected',
+            'investment_modified', 'account_deleted', 'settings_changed',
+            'update_order_status', 'force_execute_order', 'bulk_cancel_orders'
+        ],
+        required: true
+    },
 
     targetUserId: { type: Schema.Types.ObjectId, ref: 'User' },
+    targetType: { type: String },
+    targetId: { type: Schema.Types.ObjectId },
 
     // Details
-    description: { type: String, required: true },
+    description: { type: String },
     metadata: { type: Schema.Types.Mixed }, // Flexible object
 
     // IP and device tracking

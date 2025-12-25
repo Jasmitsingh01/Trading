@@ -44,7 +44,7 @@ async function restRequest(
     try {
       const headers: any = {};
 
-      // ✅ Only add Content-Type if there's a body (not for DELETE without body)
+      // Only add Content-Type if there's a body and it's not FormData
       if (body && !isFormData) {
         headers['Content-Type'] = 'application/json';
       }
@@ -57,10 +57,10 @@ async function restRequest(
         method,
         headers,
         credentials: 'include', // Important for cookies
-        signal: AbortSignal.timeout(10000), // 10 second timeout
+        signal: AbortSignal.timeout(30000), // 30 second timeout
       };
 
-      // ✅ Only add body if it exists
+      // Only add body if it exists
       if (body) {
         config.body = isFormData ? body : JSON.stringify(body);
       }
@@ -86,14 +86,14 @@ async function restRequest(
     } catch (err: any) {
       console.error(`❌ REST request error (attempt ${attempt}/${retries}):`, err);
 
-      // Retry if not the last attempt
-      if (attempt < retries) {
+      // Retry if not the last attempt and error is network-related
+      if (attempt < retries && (err.name === 'TypeError' || err.name === 'AbortError')) {
         console.log(`🔄 Retrying in ${attempt}s...`);
         await new Promise(resolve => setTimeout(resolve, attempt * 1000));
         continue;
       }
 
-      // Last attempt failed
+      // Last attempt failed or non-retryable error
       throw new Error(err.message || 'Failed to connect to server');
     }
   }
@@ -103,24 +103,20 @@ async function restRequest(
 
 export const api = {
   auth: {
-    // Register user (sets auth cookie on success)
     register: async (formData: FormData) => {
       return restRequest('auth/register', 'POST', formData, undefined, true);
     },
 
-    // Login user (sets auth cookie on success)
     login: async (email: string, password: string) => {
       return restRequest('auth/login', 'POST', { email, password });
     },
 
-    // Send OTP (sets verification cookie on success)
     sendOTP: async (identifier: string) => {
       const isEmail = identifier.includes('@');
       const payload = isEmail ? { email: identifier } : { phone: identifier };
       return restRequest('auth/send-otp', 'POST', payload);
     },
 
-    // Verify OTP (sets verification cookie on success)
     verifyOTP: async (identifier: string, code: string) => {
       const isEmail = identifier.includes('@');
       const payload = isEmail
@@ -131,12 +127,10 @@ export const api = {
 
     logout: async () => {
       try {
-        // Call REST logout endpoint to clear cookies
         await restRequest('auth/logout', 'POST');
-        console.log('✅ Logout API successful');
+        console.log('✅ Logout successful');
       } catch (err) {
         console.warn('⚠️ Logout API failed:', err);
-        // Continue with client-side cleanup even if API fails
       }
     },
 
@@ -337,18 +331,7 @@ export const api = {
     },
 
     createDepositWithFile: async (formData: FormData) => {
-      const response = await fetch(`${API_URL}/transactions/deposit`, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Upload failed' }));
-        throw new Error(error.message || 'Failed to upload payment proof');
-      }
-
-      return response.json();
+      return restRequest('transactions/deposit', 'POST', formData, undefined, true);
     },
 
     getById: async (id: string) => {
@@ -579,7 +562,6 @@ export const api = {
       return restRequest(url, 'GET');
     },
 
-    // Crypto API - Using Binance directly (no backend needed)
     getCryptoSymbols: async () => {
       const { fetchAllCryptoData } = await import('./binance');
       return await fetchAllCryptoData();
@@ -591,7 +573,6 @@ export const api = {
       return paginateCryptoData(allData, page, limit);
     },
 
-    // Forex API - Using backend routes
     getForexPairs: async () => {
       return restRequest('forex/pairs', 'GET');
     },
@@ -768,28 +749,23 @@ export const api = {
     },
 
     deleteAccount: async (id: string) => {
-      // ✅ No body parameter - will not send Content-Type header
       return restRequest(`bank-accounts/${id}`, 'DELETE');
     },
   },
 
   password: {
-    // Forgot password - send OTP
     forgotPassword: async (email: string) => {
       return restRequest('password/forgot', 'POST', { email });
     },
-    
-    // Verify reset OTP
+
     verifyResetOTP: async (email: string, otp: string) => {
       return restRequest('password/verify-otp', 'POST', { email, otp });
     },
-    
-    // Reset password
+
     resetPassword: async (resetToken: string, newPassword: string) => {
       return restRequest('password/reset', 'POST', { resetToken, newPassword });
     },
-    
-    // Change password (requires auth)
+
     changePassword: async (currentPassword: string, newPassword: string) => {
       return restRequest('password/change', 'POST', { currentPassword, newPassword });
     }
@@ -802,11 +778,11 @@ export const api = {
     },
 
     // Users Management
-    getAllUsers: async (params?: { 
-      page?: number; 
-      limit?: number; 
-      search?: string; 
-      status?: string 
+    getAllUsers: async (params?: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      status?: string
     }) => {
       const query = new URLSearchParams(params as any).toString();
       return restRequest(`admin/users${query ? '?' + query : ''}`, 'GET');
@@ -824,16 +800,15 @@ export const api = {
       return restRequest(`admin/users/${userId}/kyc`, 'PATCH', { kycStatus, reason });
     },
 
-    // ✅ NEW: Add Balance to User
     addBalance: async (userId: string, amount: number, note?: string) => {
       return restRequest(`admin/users/${userId}/add-balance`, 'POST', { amount, note });
     },
 
     // Transactions Management
-    getAllTransactions: async (params?: { 
-      page?: number; 
-      limit?: number; 
-      type?: string; 
+    getAllTransactions: async (params?: {
+      page?: number;
+      limit?: number;
+      type?: string;
       status?: string;
       startDate?: string;
       endDate?: string;
@@ -850,14 +825,55 @@ export const api = {
       return restRequest(`admin/transactions/${transactionId}/status`, 'PATCH', { status, notes });
     },
 
+    // Orders Management
+    getAllOrders: async (params?: {
+      page?: number;
+      limit?: number;
+      status?: string;
+      orderType?: string;
+      assetType?: string;
+      side?: string;
+      userId?: string;
+      symbol?: string;
+      startDate?: string;
+      endDate?: string;
+    }) => {
+      const query = new URLSearchParams(params as any).toString();
+      return restRequest(`admin/orders${query ? '?' + query : ''}`, 'GET');
+    },
+
+    getOrderDetails: async (orderId: string) => {
+      return restRequest(`admin/orders/${orderId}`, 'GET');
+    },
+
+    updateOrderStatus: async (orderId: string, status: string, reason?: string) => {
+      return restRequest(`admin/orders/${orderId}/status`, 'PATCH', { status, reason });
+    },
+
+    forceExecuteOrder: async (orderId: string, fillPrice?: number, fillQuantity?: number) => {
+      return restRequest(`admin/orders/${orderId}/execute`, 'POST', { fillPrice, fillQuantity });
+    },
+
+    getOrderStatistics: async (params?: {
+      startDate?: string;
+      endDate?: string;
+      period?: string;
+    }) => {
+      const query = new URLSearchParams(params as any).toString();
+      return restRequest(`admin/orders/stats${query ? '?' + query : ''}`, 'GET');
+    },
+
+    bulkCancelOrders: async (orderIds: string[], reason?: string) => {
+      return restRequest('admin/orders/bulk/cancel', 'POST', { orderIds, reason });
+    },
+
     // Statistics & Analytics
     getPlatformStats: async () => {
       return restRequest('admin/stats', 'GET');
     },
 
-    // ✅ NEW: Revenue & Financial Stats
-    getRevenueStats: async (params?: { 
-      startDate?: string; 
+    getRevenueStats: async (params?: {
+      startDate?: string;
       endDate?: string;
       period?: 'day' | 'week' | 'month' | 'year'
     }) => {
@@ -865,16 +881,15 @@ export const api = {
       return restRequest(`admin/stats/revenue${query ? '?' + query : ''}`, 'GET');
     },
 
-    // ✅ NEW: User Activity Stats
-    getUserActivityStats: async (params?: { 
-      startDate?: string; 
-      endDate?: string 
+    getUserActivityStats: async (params?: {
+      startDate?: string;
+      endDate?: string
     }) => {
       const query = new URLSearchParams(params as any).toString();
       return restRequest(`admin/stats/user-activity${query ? '?' + query : ''}`, 'GET');
     },
 
-    // ✅ NEW: Export Data
+    // Export Operations
     exportUsers: async (format: 'csv' | 'excel' = 'csv') => {
       return restRequest(`admin/export/users?format=${format}`, 'GET');
     },
@@ -890,7 +905,7 @@ export const api = {
       return restRequest(`admin/export/transactions${query ? '?' + query : ''}`, 'GET');
     },
 
-    // ✅ NEW: Bulk Operations
+    // Bulk Operations
     bulkUpdateUserStatus: async (userIds: string[], accountStatus: string, reason?: string) => {
       return restRequest('admin/users/bulk/update-status', 'POST', { userIds, accountStatus, reason });
     },
@@ -903,7 +918,7 @@ export const api = {
       return restRequest('admin/users/bulk/reject-kyc', 'POST', { userIds, reason });
     },
 
-    // ✅ NEW: System Configuration
+    // System Configuration
     getSystemSettings: async () => {
       return restRequest('admin/settings', 'GET');
     },
@@ -912,10 +927,10 @@ export const api = {
       return restRequest('admin/settings', 'PATCH', settings);
     },
 
-    // ✅ NEW: Audit Logs
-    getAuditLogs: async (params?: { 
-      page?: number; 
-      limit?: number; 
+    // Audit Logs
+    getAuditLogs: async (params?: {
+      page?: number;
+      limit?: number;
       action?: string;
       userId?: string;
       startDate?: string;
@@ -923,46 +938,6 @@ export const api = {
     }) => {
       const query = new URLSearchParams(params as any).toString();
       return restRequest(`admin/audit-logs${query ? '?' + query : ''}`, 'GET');
-    },
-       getAllOrders: async (params?: { 
-        page?: number; 
-        limit?: number; 
-        status?: string;
-        orderType?: string;
-        assetType?: string;
-        side?: string;
-        userId?: string;
-        symbol?: string;
-        startDate?: string;
-        endDate?: string;
-    }) => {
-        const query = new URLSearchParams(params as any).toString();
-        return restRequest(`admin/orders${query ? '?' + query : ''}`, 'GET');
-    },
-
-    getOrderDetails: async (orderId: string) => {
-        return restRequest(`admin/orders/${orderId}`, 'GET');
-    },
-
-    updateOrderStatus: async (orderId: string, status: string, reason?: string) => {
-        return restRequest(`admin/orders/${orderId}/status`, 'PATCH', { status, reason });
-    },
-
-    forceExecuteOrder: async (orderId: string, fillPrice?: number, fillQuantity?: number) => {
-        return restRequest(`admin/orders/${orderId}/execute`, 'POST', { fillPrice, fillQuantity });
-    },
-
-    getOrderStatistics: async (params?: { 
-        startDate?: string; 
-        endDate?: string;
-        period?: string;
-    }) => {
-        const query = new URLSearchParams(params as any).toString();
-        return restRequest(`admin/orders/stats${query ? '?' + query : ''}`, 'GET');
-    },
-
-    bulkCancelOrders: async (orderIds: string[], reason?: string) => {
-        return restRequest('admin/orders/bulk/cancel', 'POST', { orderIds, reason });
     },
   },
 };

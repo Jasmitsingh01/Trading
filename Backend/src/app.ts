@@ -19,6 +19,7 @@ import { config } from "dotenv";
 import { registerTransactionRoutes } from './routes/transaction.ts';
 import { registerPasswordRoutes } from './routes/password.ts';
 import { registerAdminRoutes } from './routes/admin.ts';  // ✅ Add this
+import { registerAdminOrdersRoutes } from './routes/admin/orders.routes';
 // Load environment variables FIRST
 config();
 
@@ -133,6 +134,7 @@ await registerMarketRoutes(app);
 await registerBankRoutes(app);
 await registerTransactionRoutes(app);
 await registerPasswordRoutes(app);
+await registerAdminOrdersRoutes(app);
 // Handle preflight requests
 
 // Health check endpoint

@@ -24,7 +24,7 @@ const navigation = [
     { name: 'Users', href: '/admin/users', icon: Users },
     { name: 'Transactions', href: '/admin/transactions', icon: DollarSign },
     { name: 'Orders', href: '/admin/orders', icon: TrendingUp },
-    { name: 'Settings', href: '/admin/settings', icon: Settings },
+    // { name: 'Settings', href: '/admin/settings', icon: Settings },
 ]
 
 export default function AdminLayout({

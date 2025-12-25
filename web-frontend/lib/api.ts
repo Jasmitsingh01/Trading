@@ -924,6 +924,46 @@ export const api = {
       const query = new URLSearchParams(params as any).toString();
       return restRequest(`admin/audit-logs${query ? '?' + query : ''}`, 'GET');
     },
+       getAllOrders: async (params?: { 
+        page?: number; 
+        limit?: number; 
+        status?: string;
+        orderType?: string;
+        assetType?: string;
+        side?: string;
+        userId?: string;
+        symbol?: string;
+        startDate?: string;
+        endDate?: string;
+    }) => {
+        const query = new URLSearchParams(params as any).toString();
+        return restRequest(`admin/orders${query ? '?' + query : ''}`, 'GET');
+    },
+
+    getOrderDetails: async (orderId: string) => {
+        return restRequest(`admin/orders/${orderId}`, 'GET');
+    },
+
+    updateOrderStatus: async (orderId: string, status: string, reason?: string) => {
+        return restRequest(`admin/orders/${orderId}/status`, 'PATCH', { status, reason });
+    },
+
+    forceExecuteOrder: async (orderId: string, fillPrice?: number, fillQuantity?: number) => {
+        return restRequest(`admin/orders/${orderId}/execute`, 'POST', { fillPrice, fillQuantity });
+    },
+
+    getOrderStatistics: async (params?: { 
+        startDate?: string; 
+        endDate?: string;
+        period?: string;
+    }) => {
+        const query = new URLSearchParams(params as any).toString();
+        return restRequest(`admin/orders/stats${query ? '?' + query : ''}`, 'GET');
+    },
+
+    bulkCancelOrders: async (orderIds: string[], reason?: string) => {
+        return restRequest('admin/orders/bulk/cancel', 'POST', { orderIds, reason });
+    },
   },
 };
 

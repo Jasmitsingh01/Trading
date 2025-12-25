@@ -65,7 +65,7 @@ export default function PortfolioDashboard() {
     const [isDepositModalOpen, setIsDepositModalOpen] = useState(false)
     const [token, setToken] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(true)
-    
+
     // Dynamic data from backend
     const [portfolio, setPortfolio] = useState<any>(null)
     const [balance, setBalance] = useState<any>(null)
@@ -92,14 +92,14 @@ export default function PortfolioDashboard() {
     useEffect(() => {
         const fetchData = async () => {
             if (!token) return
-            
+
             setIsLoading(true)
             try {
                 const [portfolioData, balanceData, positionsData, transactionsData] = await Promise.all([
-                    api.user.getPortfolio(token).catch(() => null),
-                    api.user.getBalance(token).catch(() => null),
-                    api.positions.getAll(token).catch(() => ({ positions: [] })),
-                    api.transactions.getAll(token, { page: 1, limit: 10 }).catch(() => ({ transactions: { transactions: [] } }))
+                    api.user.getPortfolio().catch(() => null),
+                    api.user.getBalance().catch(() => null),
+                    api.positions.getAll().catch(() => ({ positions: [] })),
+                    api.transactions.getAll({ page: 1, limit: 10 }).catch(() => ({ transactions: { transactions: [] } }))
                 ])
 
                 setPortfolio(portfolioData?.userPortfolio || {
@@ -149,7 +149,7 @@ export default function PortfolioDashboard() {
     const recentActivity = transactions.slice(0, 6).map(tx => {
         const date = new Date(tx.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
         let action = `${tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}: $${tx.amount.toFixed(2)}`
-        
+
         return {
             date: tx.status === 'pending' ? 'Pending' : date,
             action,
@@ -276,7 +276,7 @@ export default function PortfolioDashboard() {
         if (!token || !depositAmount) return
 
         try {
-            await api.transactions.createDeposit(token, {
+            await api.transactions.createDeposit({
                 amount: parseFloat(depositAmount),
                 currency: "USD",
                 paymentMethod: paymentMethod as any,
@@ -286,9 +286,9 @@ export default function PortfolioDashboard() {
             alert("Deposit request submitted successfully!")
             setIsDepositModalOpen(false)
             setDepositAmount("")
-            
+
             // Refresh data
-            const balanceData = await api.user.getBalance(token)
+            const balanceData = await api.user.getBalance()
             setBalance(balanceData?.userBalance)
         } catch (error: any) {
             alert(`Deposit failed: ${error.message}`)
@@ -477,17 +477,17 @@ export default function PortfolioDashboard() {
                     <p className="text-sm text-slate-400">Add funds to your portfolio securely.</p>
                     <div className="space-y-2">
                         <label className="text-xs font-medium text-slate-300">Amount (USD)</label>
-                        <Input 
-                            type="number" 
-                            placeholder="0.00" 
+                        <Input
+                            type="number"
+                            placeholder="0.00"
                             value={depositAmount}
                             onChange={(e) => setDepositAmount(e.target.value)}
-                            className="bg-slate-900 border-white/10 text-white" 
+                            className="bg-slate-900 border-white/10 text-white"
                         />
                     </div>
                     <div className="space-y-2">
                         <label className="text-xs font-medium text-slate-300">Payment Method</label>
-                        <select 
+                        <select
                             value={paymentMethod}
                             onChange={(e) => setPaymentMethod(e.target.value)}
                             className="w-full bg-slate-900 border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
@@ -500,8 +500,8 @@ export default function PortfolioDashboard() {
                     </div>
                     <div className="flex justify-end gap-2 mt-4">
                         <Button variant="ghost" onClick={() => setIsDepositModalOpen(false)}>Cancel</Button>
-                        <Button 
-                            className="bg-emerald-500 hover:bg-emerald-600 text-white" 
+                        <Button
+                            className="bg-emerald-500 hover:bg-emerald-600 text-white"
                             onClick={handleDeposit}
                             disabled={!depositAmount || parseFloat(depositAmount) <= 0}
                         >

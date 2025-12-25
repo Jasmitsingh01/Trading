@@ -90,26 +90,7 @@ const Header = () => {
                         <NavdropDown items={tradingMenuItems} trigger="Trading" />
                         <NavdropDown items={toolsMenuItems} trigger="Tools" />
 
-                        <Link
-                            href="/promotion"
-                            className="px-4 py-2 rounded text-gray-300 hover:text-white hover:bg-gray-800/50 transition-colors text-sm font-medium"
-                        >
-                            Promotion
-                        </Link>
-
-                        <Link
-                            href="/partnership"
-                            className="px-4 py-2 rounded text-gray-300 hover:text-white hover:bg-gray-800/50 transition-colors text-sm font-medium"
-                        >
-                            Partnership
-                        </Link>
-
-                        <Link
-                            href="/funding"
-                            className="px-4 py-2 rounded text-gray-300 hover:text-white hover:bg-gray-800/50 transition-colors text-sm font-medium"
-                        >
-                            Funding
-                        </Link>
+                        
 
                         {/* CTA Button */}
                         <Button

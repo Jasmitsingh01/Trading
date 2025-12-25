@@ -3,7 +3,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Filter, CheckCircle, XCircle, Loader2, AlertCircle, Calendar } from 'lucide-react'
+import { Search, Filter, CheckCircle, XCircle, Loader2, AlertCircle, Calendar, Eye, Download, Image as ImageIcon } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,9 +21,15 @@ interface Transaction {
     amount: number
     currency: string
     status: string
-    paymentMethod: string
+    paymentMethod?: string
     description?: string
     notes?: string
+    proofDocument?: string // Screenshot/proof URL
+    bankDetails?: {
+        bankName?: string
+        accountNumber?: string
+        transactionId?: string
+    }
     createdAt: string
 }
 
@@ -40,6 +46,7 @@ export default function AdminTransactions() {
     // Modal states
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
+    const [isImageModalOpen, setIsImageModalOpen] = useState(false)
     const [actionLoading, setActionLoading] = useState(false)
     const [newStatus, setNewStatus] = useState('')
     const [adminNotes, setAdminNotes] = useState('')
@@ -96,6 +103,29 @@ export default function AdminTransactions() {
             alert(err.message || 'Failed to update transaction status')
         } finally {
             setActionLoading(false)
+        }
+    }
+
+    const handleViewImage = (transaction: Transaction) => {
+        setSelectedTransaction(transaction)
+        setIsImageModalOpen(true)
+    }
+
+    const handleDownloadImage = async (url: string, transactionId: string) => {
+        try {
+            const response = await fetch(url)
+            const blob = await response.blob()
+            const downloadUrl = window.URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = downloadUrl
+            a.download = `transaction-${transactionId}-proof.jpg`
+            document.body.appendChild(a)
+            a.click()
+            window.URL.revokeObjectURL(downloadUrl)
+            document.body.removeChild(a)
+        } catch (err) {
+            console.error('Error downloading image:', err)
+            alert('Failed to download image')
         }
     }
 
@@ -221,6 +251,7 @@ export default function AdminTransactions() {
                                             <th className="text-right py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">Amount</th>
                                             <th className="text-center py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">Status</th>
                                             <th className="text-center py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">Date</th>
+                                            <th className="text-center py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">Proof</th>
                                             <th className="text-center py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">Actions</th>
                                         </tr>
                                     </thead>
@@ -263,6 +294,20 @@ export default function AdminTransactions() {
                                                     <div className="text-xs text-gray-500 dark:text-gray-400">
                                                         {new Date(tx.createdAt).toLocaleTimeString()}
                                                     </div>
+                                                </td>
+                                                <td className="py-4 px-4 text-center">
+                                                    {tx.proofDocument ? (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => handleViewImage(tx)}
+                                                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                                                        >
+                                                            <Eye className="h-4 w-4" />
+                                                        </Button>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-400 dark:text-gray-600">No proof</span>
+                                                    )}
                                                 </td>
                                                 <td className="py-4 px-4">
                                                     <div className="flex items-center justify-center gap-2">
@@ -334,7 +379,31 @@ export default function AdminTransactions() {
                             User: <strong>{selectedTransaction?.userId?.fullname}</strong>
                             <br />
                             Amount: <strong>${selectedTransaction?.amount.toFixed(2)}</strong>
+                            <br />
+                            {selectedTransaction?.bankDetails?.transactionId && (
+                                <>
+                                    Bank Txn ID: <strong>{selectedTransaction.bankDetails.transactionId}</strong>
+                                    <br />
+                                </>
+                            )}
                         </p>
+
+                        {selectedTransaction?.proofDocument && (
+                            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded">
+                                <p className="text-sm text-blue-800 dark:text-blue-400 mb-2">
+                                    <ImageIcon className="h-4 w-4 inline mr-1" />
+                                    Payment proof available
+                                </p>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleViewImage(selectedTransaction)}
+                                    className="text-blue-600 hover:text-blue-700"
+                                >
+                                    View Screenshot
+                                </Button>
+                            </div>
+                        )}
 
                         <label className="text-xs font-medium text-gray-700 dark:text-gray-300 block mb-2">
                             New Status
@@ -392,6 +461,70 @@ export default function AdminTransactions() {
                                     Updating...
                                 </>
                             ) : 'Update Status'}
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Image View Modal */}
+            <Modal
+                isOpen={isImageModalOpen}
+                onClose={() => setIsImageModalOpen(false)}
+                title="Payment Proof"
+            >
+                <div className="space-y-4">
+                    <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-4">
+                        <div className="mb-3">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                Transaction ID: <strong className="text-gray-900 dark:text-white">{selectedTransaction?._id.slice(-8)}</strong>
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                User: <strong className="text-gray-900 dark:text-white">{selectedTransaction?.userId?.fullname}</strong>
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                Amount: <strong className="text-gray-900 dark:text-white">${selectedTransaction?.amount.toFixed(2)}</strong>
+                            </p>
+                            {selectedTransaction?.bankDetails?.transactionId && (
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    Bank Txn ID: <strong className="text-gray-900 dark:text-white">{selectedTransaction.bankDetails.transactionId}</strong>
+                                </p>
+                            )}
+                        </div>
+
+                        {selectedTransaction?.proofDocument ? (
+                            <div className="relative">
+                                <img
+                                    src={selectedTransaction.proofDocument}
+                                    alt="Payment Proof"
+                                    className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
+                                    onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.src = '/placeholder-image.png';
+                                    }}
+                                />
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDownloadImage(selectedTransaction.proofDocument!, selectedTransaction._id)}
+                                    className="mt-3 w-full"
+                                >
+                                    <Download className="h-4 w-4 mr-2" />
+                                    Download Screenshot
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center h-64 bg-gray-100 dark:bg-slate-700 rounded-lg">
+                                <p className="text-gray-400 dark:text-gray-500">No proof document available</p>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex justify-end pt-2">
+                        <Button
+                            variant="ghost"
+                            onClick={() => setIsImageModalOpen(false)}
+                        >
+                            Close
                         </Button>
                     </div>
                 </div>

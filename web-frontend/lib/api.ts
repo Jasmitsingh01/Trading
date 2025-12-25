@@ -105,7 +105,7 @@ export const api = {
   auth: {
     // Register user (sets auth cookie on success)
     register: async (formData: FormData) => {
-      return restRequest('/auth/register', 'POST', formData, undefined, true);
+      return restRequest('auth/register', 'POST', formData, undefined, true);
     },
 
     // Login user (sets auth cookie on success)
@@ -117,7 +117,7 @@ export const api = {
     sendOTP: async (identifier: string) => {
       const isEmail = identifier.includes('@');
       const payload = isEmail ? { email: identifier } : { phone: identifier };
-      return restRequest('/auth/send-otp', 'POST', payload);
+      return restRequest('auth/send-otp', 'POST', payload);
     },
 
     // Verify OTP (sets verification cookie on success)
@@ -126,7 +126,7 @@ export const api = {
       const payload = isEmail
         ? { email: identifier, emailOtp: code }
         : { phone: identifier, phoneOtp: code };
-      return restRequest('/auth/verify-otp', 'POST', payload);
+      return restRequest('auth/verify-otp', 'POST', payload);
     },
 
     logout: async () => {
@@ -550,19 +550,19 @@ export const api = {
 
   market: {
     getQuote: async (symbol: string, assetType: string) => {
-      return restRequest(`/market/quote?symbol=${symbol}&assetType=${assetType}`, 'GET');
+      return restRequest(`market/quote?symbol=${symbol}&assetType=${assetType}`, 'GET');
     },
 
     getWatchlistQuotes: async () => {
-      return restRequest('/market/watchlist-quotes', 'GET');
+      return restRequest('market/watchlist-quotes', 'GET');
     },
 
     search: async (query: string) => {
-      return restRequest(`/market/search?query=${query}`, 'GET');
+      return restRequest(`market/search?query=${query}`, 'GET');
     },
 
     getCompanyProfile: async (symbol: string) => {
-      return restRequest(`/market/company-profile?symbol=${symbol}`, 'GET');
+      return restRequest(`market/company-profile?symbol=${symbol}`, 'GET');
     },
 
     getCandles: async (
@@ -572,7 +572,7 @@ export const api = {
       to: number,
       assetType?: string
     ) => {
-      let url = `/market/candles?symbol=${symbol}&resolution=${resolution}&from=${from}&to=${to}`;
+      let url = `market/candles?symbol=${symbol}&resolution=${resolution}&from=${from}&to=${to}`;
       if (assetType) {
         url += `&assetType=${assetType}`;
       }
@@ -593,11 +593,11 @@ export const api = {
 
     // Forex API - Using backend routes
     getForexPairs: async () => {
-      return restRequest('/forex/pairs', 'GET');
+      return restRequest('forex/pairs', 'GET');
     },
 
     getForexPaginated: async (page: number = 1, limit: number = 10) => {
-      return restRequest(`/forex/pairs/paginated?page=${page}&limit=${limit}`, 'GET');
+      return restRequest(`forex/pairs/paginated?page=${page}&limit=${limit}`, 'GET');
     }
   },
 
@@ -671,11 +671,11 @@ export const api = {
     },
 
     createRest: async (data: any) => {
-      return restRequest('/orders', 'POST', data);
+      return restRequest('orders', 'POST', data);
     },
 
     getAllRest: async (status?: string) => {
-      let url = '/orders';
+      let url = 'orders';
       if (status) url += `?status=${status}`;
       return restRequest(url, 'GET');
     },
@@ -744,7 +744,7 @@ export const api = {
 
   transfers: {
     internalTransfer: async (data: { fromAccount: string; toAccount: string; amount: number }) => {
-      return restRequest('/transactions/transfer', 'POST', data);
+      return restRequest('transactions/transfer', 'POST', data);
     }
   },
 
@@ -772,7 +772,8 @@ export const api = {
       return restRequest(`bank-accounts/${id}`, 'DELETE');
     },
   },
-   password: {
+
+  password: {
     // Forgot password - send OTP
     forgotPassword: async (email: string) => {
       return restRequest('password/forgot', 'POST', { email });
@@ -793,14 +794,20 @@ export const api = {
       return restRequest('password/change', 'POST', { currentPassword, newPassword });
     }
   },
-   admin: {
+
+  admin: {
     // Dashboard
     getDashboardStats: async () => {
       return restRequest('admin/dashboard', 'GET');
     },
 
-    // Users
-    getAllUsers: async (params?: { page?: number; limit?: number; search?: string; status?: string }) => {
+    // Users Management
+    getAllUsers: async (params?: { 
+      page?: number; 
+      limit?: number; 
+      search?: string; 
+      status?: string 
+    }) => {
       const query = new URLSearchParams(params as any).toString();
       return restRequest(`admin/users${query ? '?' + query : ''}`, 'GET');
     },
@@ -817,7 +824,12 @@ export const api = {
       return restRequest(`admin/users/${userId}/kyc`, 'PATCH', { kycStatus, reason });
     },
 
-    // Transactions
+    // ✅ NEW: Add Balance to User
+    addBalance: async (userId: string, amount: number, note?: string) => {
+      return restRequest(`admin/users/${userId}/add-balance`, 'POST', { amount, note });
+    },
+
+    // Transactions Management
     getAllTransactions: async (params?: { 
       page?: number; 
       limit?: number; 
@@ -830,14 +842,88 @@ export const api = {
       return restRequest(`admin/transactions${query ? '?' + query : ''}`, 'GET');
     },
 
+    getTransactionDetails: async (transactionId: string) => {
+      return restRequest(`admin/transactions/${transactionId}`, 'GET');
+    },
+
     updateTransactionStatus: async (transactionId: string, status: string, notes?: string) => {
       return restRequest(`admin/transactions/${transactionId}/status`, 'PATCH', { status, notes });
     },
 
-    // Statistics
+    // Statistics & Analytics
     getPlatformStats: async () => {
       return restRequest('admin/stats', 'GET');
-    }
+    },
+
+    // ✅ NEW: Revenue & Financial Stats
+    getRevenueStats: async (params?: { 
+      startDate?: string; 
+      endDate?: string;
+      period?: 'day' | 'week' | 'month' | 'year'
+    }) => {
+      const query = new URLSearchParams(params as any).toString();
+      return restRequest(`admin/stats/revenue${query ? '?' + query : ''}`, 'GET');
+    },
+
+    // ✅ NEW: User Activity Stats
+    getUserActivityStats: async (params?: { 
+      startDate?: string; 
+      endDate?: string 
+    }) => {
+      const query = new URLSearchParams(params as any).toString();
+      return restRequest(`admin/stats/user-activity${query ? '?' + query : ''}`, 'GET');
+    },
+
+    // ✅ NEW: Export Data
+    exportUsers: async (format: 'csv' | 'excel' = 'csv') => {
+      return restRequest(`admin/export/users?format=${format}`, 'GET');
+    },
+
+    exportTransactions: async (params?: {
+      format?: 'csv' | 'excel';
+      startDate?: string;
+      endDate?: string;
+      type?: string;
+      status?: string;
+    }) => {
+      const query = new URLSearchParams(params as any).toString();
+      return restRequest(`admin/export/transactions${query ? '?' + query : ''}`, 'GET');
+    },
+
+    // ✅ NEW: Bulk Operations
+    bulkUpdateUserStatus: async (userIds: string[], accountStatus: string, reason?: string) => {
+      return restRequest('admin/users/bulk/update-status', 'POST', { userIds, accountStatus, reason });
+    },
+
+    bulkApproveKYC: async (userIds: string[]) => {
+      return restRequest('admin/users/bulk/approve-kyc', 'POST', { userIds });
+    },
+
+    bulkRejectKYC: async (userIds: string[], reason: string) => {
+      return restRequest('admin/users/bulk/reject-kyc', 'POST', { userIds, reason });
+    },
+
+    // ✅ NEW: System Configuration
+    getSystemSettings: async () => {
+      return restRequest('admin/settings', 'GET');
+    },
+
+    updateSystemSettings: async (settings: any) => {
+      return restRequest('admin/settings', 'PATCH', settings);
+    },
+
+    // ✅ NEW: Audit Logs
+    getAuditLogs: async (params?: { 
+      page?: number; 
+      limit?: number; 
+      action?: string;
+      userId?: string;
+      startDate?: string;
+      endDate?: string;
+    }) => {
+      const query = new URLSearchParams(params as any).toString();
+      return restRequest(`admin/audit-logs${query ? '?' + query : ''}`, 'GET');
+    },
   },
 };
 

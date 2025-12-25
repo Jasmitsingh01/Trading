@@ -28,7 +28,7 @@ export const getDashboardStats = RequestHandler(async (req: FastifyRequest, res:
   // Get total transactions
   const totalTransactions = await Transaction.countDocuments();
   const pendingTransactions = await Transaction.countDocuments({ status: 'pending' });
-  
+
   // Calculate total volume
   const volumeResult = await Transaction.aggregate([
     { $match: { status: 'completed' } },
@@ -224,10 +224,10 @@ export const updateUserStatus = RequestHandler(async (req: FastifyRequest<{
     throw new Error('User not found');
   }
 
-  // Create notification for user
+  // Create notification for user - FIXED: Changed 'accountsuspended' to 'account_suspended'
   await Notification.create({
     userId: user._id,
-    type: accountStatus === 'suspended' ? 'accountsuspended' : 'general',
+    type: accountStatus === 'suspended' ? 'account_suspended' : 'general',
     title: `Account ${accountStatus}`,
     message: reason || `Your account has been ${accountStatus} by admin`,
     priority: 'high',
@@ -264,10 +264,12 @@ export const updateKYCStatus = RequestHandler(async (req: FastifyRequest<{
 
   const user = await User.findByIdAndUpdate(
     req.params.userId,
-    { 
+    {
       kycStatus,
       isKYCCompleted: kycStatus === 'approved',
-      accountStatus: kycStatus === 'approved' ? 'active' : 'pending'
+      accountStatus: kycStatus === 'approved' ? 'active' : 'pending',
+      kycApprovedAt: kycStatus === 'approved' ? new Date() : undefined,
+      kycRejectionReason: kycStatus === 'rejected' ? reason : undefined
     },
     { new: true }
   ).select('-password');
@@ -276,13 +278,14 @@ export const updateKYCStatus = RequestHandler(async (req: FastifyRequest<{
     throw new Error('User not found');
   }
 
-  // Create notification
+  // Create notification - FIXED: Changed 'kycapproved' to 'kyc_approved' and 'kycrejected' to 'kyc_rejected'
   await Notification.create({
     userId: user._id,
-    type: kycStatus === 'approved' ? 'kycapproved' : 'kycrejected',
+    type: kycStatus === 'approved' ? 'kyc_approved' : 'kyc_rejected',
     title: `KYC ${kycStatus}`,
     message: reason || `Your KYC verification has been ${kycStatus}`,
-    priority: 'high'
+    priority: 'high',
+    relatedEntityType: 'kyc'
   });
 
   return {
@@ -293,13 +296,92 @@ export const updateKYCStatus = RequestHandler(async (req: FastifyRequest<{
 });
 
 /**
+ * Add balance to user account
+ */
+/**
+ * Add balance to user account
+ */
+export const addBalance = RequestHandler(async (req: FastifyRequest<{
+  Params: { userId: string };
+  Body: { amount: number; note?: string }
+}>, res: FastifyReply) => {
+  // @ts-ignore
+  const adminId = req.user?.userId;
+  const admin = await User.findById(adminId);
+
+  if (!admin || admin.role !== 'admin') {
+    throw new Error('Unauthorized - Admin access only');
+  }
+
+  const { amount, note } = req.body;
+
+  if (!amount || amount <= 0) {
+    throw new Error('Invalid amount');
+  }
+
+  const user = await User.findById(req.params.userId);
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  // Update account balance
+  const balance = await AccountBalance.findOne({ userId: user._id });
+  if (!balance) {
+    throw new Error('Account balance not found');
+  }
+
+  const balanceBefore = balance.totalBalance;
+  
+  balance.availableBalance += amount;
+  balance.totalBalance += amount;
+  balance.totalDeposited += amount;
+  await balance.save();
+
+  // Create transaction record - FIXED: Changed 'method' to 'paymentMethod' and added 'currency'
+  const transaction = await Transaction.create({
+    userId: user._id,
+    type: 'deposit',
+    amount,
+    currency: balance.currency || 'USD', // Use account balance currency or default to USD
+    status: 'completed',
+    paymentMethod: 'bank_transfer', // Changed from 'method' to 'paymentMethod'
+    description: 'Balance added by admin',
+    notes: note || 'Admin credit',
+    balanceBefore: balanceBefore,
+    balanceAfter: balance.totalBalance,
+    processedBy: adminId,
+    processedAt: new Date()
+  });
+
+  // Create notification - FIXED: Explicitly cast transaction to get _id
+  const createdTransaction = transaction as any;
+  
+  await Notification.create({
+    userId: user._id,
+    type: 'balance_added',
+    title: 'Balance Added',
+    message: `$${amount} has been added to your account by admin`,
+    priority: 'high',
+    relatedEntityId: createdTransaction._id,
+    relatedEntityType: 'transaction'
+  });
+
+  return {
+    success: true,
+    message: `Successfully added $${amount} to user account`,
+    data: { balance, transaction }
+  };
+});
+
+
+/**
  * Get all transactions with filters
  */
 export const getAllTransactions = RequestHandler(async (req: FastifyRequest<{
-  Querystring: { 
-    page?: string; 
-    limit?: string; 
-    type?: string; 
+  Querystring: {
+    page?: string;
+    limit?: string;
+    type?: string;
     status?: string;
     startDate?: string;
     endDate?: string;
@@ -324,7 +406,7 @@ export const getAllTransactions = RequestHandler(async (req: FastifyRequest<{
 
   if (type) query.type = type;
   if (status) query.status = status;
-  
+
   if (startDate || endDate) {
     query.createdAt = {};
     if (startDate) query.createdAt.$gte = new Date(startDate);
@@ -416,13 +498,15 @@ export const updateTransactionStatus = RequestHandler(async (req: FastifyRequest
 
   await transaction.save();
 
-  // Create notification
+  // Create notification - FIXED: Changed 'paymentapproved' to 'payment_approved' and 'paymentrejected' to 'payment_rejected'
   await Notification.create({
     userId: transaction.userId,
-    type: status === 'completed' ? 'paymentapproved' : 'paymentrejected',
+    type: status === 'completed' ? 'payment_approved' : 'payment_rejected',
     title: `Transaction ${status}`,
     message: `Your ${transaction.type} of $${transaction.amount} has been ${status}`,
-    priority: 'high'
+    priority: 'high',
+    relatedEntityId: transaction._id,
+    relatedEntityType: 'transaction'
   });
 
   return {
@@ -501,6 +585,7 @@ export default {
   getUserDetails,
   updateUserStatus,
   updateKYCStatus,
+  addBalance,
   getAllTransactions,
   updateTransactionStatus,
   getPlatformStats

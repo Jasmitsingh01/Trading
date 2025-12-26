@@ -1,163 +1,71 @@
-// components/landing/footer.tsx
 'use client'
 
 import Link from 'next/link'
-import { Facebook, Twitter, Instagram, Linkedin, Youtube, Mail } from 'lucide-react'
-
-const footerLinks = {
-  product: [
-    { name: 'Features', href: '#features' },
-    { name: 'Pricing', href: '#pricing' },
-    { name: 'Security', href: '/security' },
-    { name: 'Roadmap', href: '/roadmap' }
-  ],
-  company: [
-    { name: 'About Us', href: '/about' },
-    { name: 'Careers', href: '/careers' },
-    { name: 'Blog', href: '/blog' },
-    { name: 'Press Kit', href: '/press' }
-  ],
-  resources: [
-    { name: 'Help Center', href: '/help' },
-    { name: 'API Docs', href: '/docs' },
-    { name: 'Community', href: '/community' },
-    { name: 'Tutorials', href: '/tutorials' }
-  ],
-  legal: [
-    { name: 'Privacy Policy', href: '/privacy' },
-    { name: 'Terms of Service', href: '/terms' },
-    { name: 'Cookie Policy', href: '/cookies' },
-    { name: 'Disclaimer', href: '/disclaimer' }
-  ]
-}
-
-const socialLinks = [
-  { icon: Twitter, href: '#', label: 'Twitter' },
-  { icon: Facebook, href: '#', label: 'Facebook' },
-  { icon: Instagram, href: '#', label: 'Instagram' },
-  { icon: Linkedin, href: '#', label: 'LinkedIn' },
-  { icon: Youtube, href: '#', label: 'YouTube' }
-]
+import { TrendingUp, Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react'
 
 export function Footer() {
   return (
-    <footer className="bg-slate-900 dark:bg-slate-950 text-slate-300 relative overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:30px_30px]" />
-
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Main Footer */}
-        <div className="py-16 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
-          {/* Brand Column */}
-          <div className="col-span-2">
-            <Link href="/" className="inline-block mb-4">
-              <div className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 text-transparent bg-clip-text">
-                TradePro
+    <footer className="bg-gray-50 text-gray-700 border-t border-gray-200">
+      <div className="container mx-auto px-6 py-16">
+        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
+          {/* Company Info */}
+          <div className="lg:col-span-2">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm">
+                <TrendingUp className="h-6 w-6 text-white" strokeWidth={2.5} />
               </div>
-            </Link>
-            <p className="text-sm text-slate-400 mb-6 max-w-sm">
-              Your trusted platform for trading stocks, crypto, forex, and commodities.
-              Join thousands of successful traders today.
-            </p>
-            {/* Newsletter */}
-            <div className="space-y-3">
-              <p className="text-sm font-semibold text-white">Subscribe to our newsletter</p>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="flex-1 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-blue-500 transition-colors"
-                />
-                <button className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-lg transition-all duration-300 hover:scale-105">
-                  <Mail className="w-5 h-5 text-white" />
-                </button>
-              </div>
+              <span className="text-2xl font-bold text-gray-900">TradeVault</span>
             </div>
-          </div>
-
-          {/* Links Columns */}
-          <div>
-            <h3 className="font-semibold text-white mb-4">Product</h3>
-            <ul className="space-y-3">
-              {footerLinks.product.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-sm hover:text-white transition-colors"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold text-white mb-4">Company</h3>
-            <ul className="space-y-3">
-              {footerLinks.company.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-sm hover:text-white transition-colors"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold text-white mb-4">Resources</h3>
-            <ul className="space-y-3">
-              {footerLinks.resources.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-sm hover:text-white transition-colors"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold text-white mb-4">Legal</h3>
-            <ul className="space-y-3">
-              {footerLinks.legal.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-sm hover:text-white transition-colors"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        {/* Bottom Footer */}
-        <div className="py-8 border-t border-slate-800">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            {/* Copyright */}
-            <p className="text-sm text-slate-400">
-              © {new Date().getFullYear()} TradePro. All rights reserved.
+            <p className="text-gray-600 mb-6 max-w-sm leading-relaxed">
+              Professional trading platform trusted by thousands of traders worldwide. Trade stocks, forex, crypto, and more with confidence.
             </p>
+       
+          </div>
 
+          {/* Platform */}
+          <div>
+            <h4 className="text-gray-900 font-bold mb-4">Platform</h4>
+            <ul className="space-y-3 text-sm">
+              <li><Link href="#features" className="text-gray-600 hover:text-emerald-600 transition-colors">Features</Link></li>
+              <li><Link href="#markets" className="text-gray-600 hover:text-emerald-600 transition-colors">Markets</Link></li>
+              <li><Link href="/dashboard" className="text-gray-600 hover:text-emerald-600 transition-colors">Dashboard</Link></li>
+              <li><Link href="/trading-platform" className="text-gray-600 hover:text-emerald-600 transition-colors">Trading Platform</Link></li>
+              <li><Link href="/api" className="text-gray-600 hover:text-emerald-600 transition-colors">API</Link></li>
+            </ul>
+          </div>
 
+          {/* Company */}
+          <div>
+            <h4 className="text-gray-900 font-bold mb-4">Company</h4>
+            <ul className="space-y-3 text-sm">
+              <li><Link href="/about" className="text-gray-600 hover:text-emerald-600 transition-colors">About Us</Link></li>
+              <li><Link href="/contact" className="text-gray-600 hover:text-emerald-600 transition-colors">Contact</Link></li>
+              <li><Link href="/why-choose-us" className="text-gray-600 hover:text-emerald-600 transition-colors">Why Choose Us</Link></li>
+              <li><Link href="/markets" className="text-gray-600 hover:text-emerald-600 transition-colors">Markets</Link></li>
+              <li><Link href="/security" className="text-gray-600 hover:text-emerald-600 transition-colors">Security</Link></li>
+            </ul>
+          </div>
+
+          {/* Legal */}
+          <div>
+            <h4 className="text-gray-900 font-bold mb-4">Legal</h4>
+            <ul className="space-y-3 text-sm">
+              <li><Link href="#" className="text-gray-600 hover:text-emerald-600 transition-colors">Terms of Service</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-emerald-600 transition-colors">Privacy Policy</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-emerald-600 transition-colors">Cookie Policy</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-emerald-600 transition-colors">Disclaimer</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-emerald-600 transition-colors">Licenses</Link></li>
+            </ul>
           </div>
         </div>
 
-        {/* Disclaimer */}
-        <div className="pb-8">
-          <p className="text-xs text-slate-500 text-center max-w-4xl mx-auto">
-            Trading involves risk and may not be suitable for all investors. Past performance does not guarantee future results.
-            Please consider your investment objectives and risk tolerance before trading.
+        
+
+        {/* Bottom Bar */}
+        <div className="pt-8 border-t border-gray-300 text-center text-sm text-gray-600">
+          <p className="font-medium text-gray-900">© 2025 TradeVault. All rights reserved.</p>
+          <p className="mt-2 text-gray-500">
+            Trading involves risk. Only invest what you can afford to lose. TradeVault is registered with SEC and member of FINRA/SIPC.
           </p>
         </div>
       </div>

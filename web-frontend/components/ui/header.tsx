@@ -1,179 +1,206 @@
-// components/ui/header.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { TrendingUp, Menu, X, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { ChevronDown, Menu, X, Settings, BarChart3, Globe, Info, TrendingUp, FileText, Phone, Shield, Users, Target } from 'lucide-react'
 
-const navigation = {
-  company: [
-    { name: 'About Us', href: '/about', icon: Info, description: 'The story behind the xbtbroker success' },
-    { name: 'Why Choose Us', href: '/why-choose-us', icon: TrendingUp, description: 'Traders and investors choose xbtbroker' },
-    { name: 'Security of Funds', href: '/security', icon: Shield, description: 'Your Funds Security is our Top Priority' },
-    { name: 'Registration', href: '/registration', icon: FileText, description: 'Our Registration' },
-    { name: 'Contact Us', href: '/contact', icon: Phone, description: 'Let\'s get in touch' }
-  ],
-  trading: [
-    { name: 'Trading Platform', href: '/trading-platform', icon: BarChart3, description: 'Advanced tools for professional traders' },
-    { name: 'Markets', href: '/markets', icon: Globe, description: 'Explore global markets' }
-  ],
-  tools: [
-    { name: 'Trading Tools', href: '/trading-tools', icon: Settings, description: 'Professional trading utilities' }
-  ]
-}
+const companyMenuItems = [
+  { icon: '👋', title: 'About Us', description: 'The story behind the xbtbroker success', href: '/about' },
+  { icon: '🎯', title: 'Why Choose Us', description: 'Traders and investors choose xbtbroker', href: '/why-choose-us' },
+  { icon: '🔒', title: 'Security of Funds', description: 'Your Funds Security is our Top Priority', href: '/security' },
+  { icon: '📝', title: 'Registration', description: 'Our Registration', href: '/registration' },
+  { icon: '📞', title: 'Contact Us', description: "Let's get in touch", href: '/contact' },
+]
+
+const tradingMenuItems = [
+  { icon: '📊', title: 'Trading Platform', description: 'Advanced tools for professional traders', href: '/trading-platform' },
+  { icon: '🌐', title: 'Markets', description: 'Explore global markets', href: '/markets' },
+]
+
+const toolsMenuItems = [
+  { icon: '🛠️', title: 'Trading Tools', description: 'Professional trading utilities', href: '/trading-tools' },
+]
 
 export default function Header() {
+  const [isScrolled, setIsScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const toggleDropdown = (menu: string) => {
+    setOpenDropdown(openDropdown === menu ? null : menu)
+  }
+
+  const closeDropdown = () => {
+    setOpenDropdown(null)
+  }
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-slate-900">
-      <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+    <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled
+        ? 'bg-white shadow-md border-b border-gray-200'
+        : 'bg-white/95 backdrop-blur-md border-b border-gray-100'
+      }`}>
+      <div className="container mx-auto px-6 py-4">
+        <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
-              <TrendingUp className="w-6 h-6 text-white" />
+          <Link href="/" className="flex items-center space-x-3 group">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm group-hover:shadow-emerald-200 transition-all">
+              <TrendingUp className="h-6 w-6 text-white" strokeWidth={2.5} />
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 text-transparent bg-clip-text">
-              TradePro
-            </span>
+            <span className="text-2xl font-bold text-gray-900">TradeVault</span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center space-x-1">
             {/* Company Dropdown */}
-            <div 
-              className="relative"
-              onMouseEnter={() => setOpenDropdown('company')}
-              onMouseLeave={() => setOpenDropdown(null)}
-            >
-              <button className="flex items-center gap-1 px-4 py-2 text-slate-300 hover:text-white transition-colors">
+            <div className="relative">
+              <button
+                onClick={() => toggleDropdown('company')}
+                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all flex items-center gap-1"
+              >
                 Company
-                <ChevronDown className={`w-4 h-4 transition-transform ${openDropdown === 'company' ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`h-4 w-4 transition-transform ${openDropdown === 'company' ? 'rotate-180' : ''}`} />
               </button>
-              
+
               {openDropdown === 'company' && (
-                <div className="absolute top-full left-0 w-80 mt-2 bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
-                  <div className="p-2">
-                    {navigation.company.map((item) => (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={closeDropdown}
+                  />
+                  <div className="absolute top-full left-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-200 py-3 animate-in fade-in slide-in-from-top-2 duration-200 z-20">
+                    {companyMenuItems.map((item, index) => (
                       <Link
-                        key={item.name}
+                        key={index}
                         href={item.href}
-                        className="flex items-start gap-3 p-3 rounded-xl hover:bg-slate-800/50 transition-colors group"
+                        onClick={closeDropdown}
+                        className="flex items-start gap-3 px-4 py-3 hover:bg-emerald-50 transition-colors group"
                       >
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <item.icon className="w-5 h-5 text-white" />
-                        </div>
+                        <div className="text-2xl mt-1">{item.icon}</div>
                         <div className="flex-1">
-                          <div className="font-semibold text-white group-hover:text-blue-400 transition-colors">
-                            {item.name}
+                          <div className="text-sm font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors">
+                            {item.title}
                           </div>
-                          <div className="text-xs text-slate-400">
+                          <div className="text-xs text-gray-600 mt-0.5">
                             {item.description}
                           </div>
                         </div>
                       </Link>
                     ))}
                   </div>
-                </div>
+                </>
               )}
             </div>
 
             {/* Trading Dropdown */}
-            <div 
-              className="relative"
-              onMouseEnter={() => setOpenDropdown('trading')}
-              onMouseLeave={() => setOpenDropdown(null)}
-            >
-              <button className="flex items-center gap-1 px-4 py-2 text-slate-300 hover:text-white transition-colors">
+            <div className="relative">
+              <button
+                onClick={() => toggleDropdown('trading')}
+                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all flex items-center gap-1"
+              >
                 Trading
-                <ChevronDown className={`w-4 h-4 transition-transform ${openDropdown === 'trading' ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`h-4 w-4 transition-transform ${openDropdown === 'trading' ? 'rotate-180' : ''}`} />
               </button>
-              
+
               {openDropdown === 'trading' && (
-                <div className="absolute top-full left-0 w-80 mt-2 bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
-                  <div className="p-2">
-                    {navigation.trading.map((item) => (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={closeDropdown}
+                  />
+                  <div className="absolute top-full left-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-200 py-3 animate-in fade-in slide-in-from-top-2 duration-200 z-20">
+                    {tradingMenuItems.map((item, index) => (
                       <Link
-                        key={item.name}
+                        key={index}
                         href={item.href}
-                        className="flex items-start gap-3 p-3 rounded-xl hover:bg-slate-800/50 transition-colors group"
+                        onClick={closeDropdown}
+                        className="flex items-start gap-3 px-4 py-3 hover:bg-emerald-50 transition-colors group"
                       >
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <item.icon className="w-5 h-5 text-white" />
-                        </div>
+                        <div className="text-2xl mt-1">{item.icon}</div>
                         <div className="flex-1">
-                          <div className="font-semibold text-white group-hover:text-blue-400 transition-colors">
-                            {item.name}
+                          <div className="text-sm font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors">
+                            {item.title}
                           </div>
-                          <div className="text-xs text-slate-400">
+                          <div className="text-xs text-gray-600 mt-0.5">
                             {item.description}
                           </div>
                         </div>
                       </Link>
                     ))}
                   </div>
-                </div>
+                </>
               )}
             </div>
 
             {/* Tools Dropdown */}
-            <div 
-              className="relative"
-              onMouseEnter={() => setOpenDropdown('tools')}
-              onMouseLeave={() => setOpenDropdown(null)}
-            >
-              <button className="flex items-center gap-1 px-4 py-2 text-slate-300 hover:text-white transition-colors">
+            <div className="relative">
+              <button
+                onClick={() => toggleDropdown('tools')}
+                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all flex items-center gap-1"
+              >
                 Tools
-                <ChevronDown className={`w-4 h-4 transition-transform ${openDropdown === 'tools' ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`h-4 w-4 transition-transform ${openDropdown === 'tools' ? 'rotate-180' : ''}`} />
               </button>
-              
+
               {openDropdown === 'tools' && (
-                <div className="absolute top-full left-0 w-80 mt-2 bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
-                  <div className="p-2">
-                    {navigation.tools.map((item) => (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={closeDropdown}
+                  />
+                  <div className="absolute top-full left-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-200 py-3 animate-in fade-in slide-in-from-top-2 duration-200 z-20">
+                    {toolsMenuItems.map((item, index) => (
                       <Link
-                        key={item.name}
+                        key={index}
                         href={item.href}
-                        className="flex items-start gap-3 p-3 rounded-xl hover:bg-slate-800/50 transition-colors group"
+                        onClick={closeDropdown}
+                        className="flex items-start gap-3 px-4 py-3 hover:bg-emerald-50 transition-colors group"
                       >
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <item.icon className="w-5 h-5 text-white" />
-                        </div>
+                        <div className="text-2xl mt-1">{item.icon}</div>
                         <div className="flex-1">
-                          <div className="font-semibold text-white group-hover:text-blue-400 transition-colors">
-                            {item.name}
+                          <div className="text-sm font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors">
+                            {item.title}
                           </div>
-                          <div className="text-xs text-slate-400">
+                          <div className="text-xs text-gray-600 mt-0.5">
                             {item.description}
                           </div>
                         </div>
                       </Link>
                     ))}
                   </div>
-                </div>
+                </>
               )}
             </div>
 
-            <Link href="#pricing" className="px-4 py-2 text-slate-300 hover:text-white transition-colors">
+            {/* Direct Links */}
+            <Link href="#promotion" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all">
               Promotion
             </Link>
-            <Link href="/partnership" className="px-4 py-2 text-slate-300 hover:text-white transition-colors">
+            <Link href="#partnership" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all">
               Partnership
             </Link>
-          </div>
+          </nav>
 
-          {/* Auth Buttons */}
-          <div className="hidden lg:flex items-center gap-3">
+          {/* Desktop Actions */}
+          <div className="hidden lg:flex items-center space-x-3">
             <Link href="/auth/login">
-              <Button variant="ghost" className="text-slate-300 hover:text-white">
+              <Button
+                variant="ghost"
+                className="text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 font-medium"
+              >
                 Sign In
               </Button>
             </Link>
-            <Link href="/auth/open-account">
-              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-lg">
+            <Link href="/registration">
+              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm hover:shadow-md transition-all">
                 Open Account
               </Button>
             </Link>
@@ -181,44 +208,98 @@ export default function Header() {
 
           {/* Mobile Menu Button */}
           <button
-            className="lg:hidden p-2 text-slate-300 hover:text-white"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="lg:hidden text-gray-700 p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden py-4 border-t border-slate-900">
-            <div className="space-y-1">
-              {[...navigation.company, ...navigation.trading, ...navigation.tools].map((item) => (
+          <div className="lg:hidden mt-4 pb-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300 border-t border-gray-100 pt-4 max-h-[70vh] overflow-y-auto">
+            {/* Company Section */}
+            <div className="space-y-2">
+              <div className="px-4 py-2 text-xs font-bold text-gray-500 uppercase">Company</div>
+              {companyMenuItems.map((item, index) => (
                 <Link
-                  key={item.name}
+                  key={index}
                   href={item.href}
-                  className="flex items-center gap-3 px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-900/50 rounded-xl transition-colors"
+                  className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <item.icon className="w-5 h-5" />
-                  {item.name}
+                  <span className="text-xl">{item.icon}</span>
+                  <span className="text-sm font-medium">{item.title}</span>
                 </Link>
               ))}
-              <div className="pt-4 mt-4 border-t border-slate-900 space-y-2">
-                <Link href="/auth/login" className="block">
-                  <Button variant="ghost" className="w-full text-slate-300">
-                    Sign In
-                  </Button>
+            </div>
+
+            {/* Trading Section */}
+            <div className="space-y-2 pt-4">
+              <div className="px-4 py-2 text-xs font-bold text-gray-500 uppercase">Trading</div>
+              {tradingMenuItems.map((item, index) => (
+                <Link
+                  key={index}
+                  href={item.href}
+                  className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <span className="text-xl">{item.icon}</span>
+                  <span className="text-sm font-medium">{item.title}</span>
                 </Link>
-                <Link href="/auth/open-account" className="block">
-                  <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600">
-                    Open Account
-                  </Button>
+              ))}
+            </div>
+
+            {/* Tools Section */}
+            <div className="space-y-2 pt-4">
+              <div className="px-4 py-2 text-xs font-bold text-gray-500 uppercase">Tools</div>
+              {toolsMenuItems.map((item, index) => (
+                <Link
+                  key={index}
+                  href={item.href}
+                  className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <span className="text-xl">{item.icon}</span>
+                  <span className="text-sm font-medium">{item.title}</span>
                 </Link>
-              </div>
+              ))}
+            </div>
+
+            {/* Other Links */}
+            <div className="space-y-2 pt-4">
+              <Link
+                href="#promotion"
+                className="block px-4 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors text-sm font-medium"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Promotion
+              </Link>
+              <Link
+                href="#partnership"
+                className="block px-4 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors text-sm font-medium"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Partnership
+              </Link>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col gap-2 pt-4 border-t border-gray-100">
+              <Link href="/auth/login">
+                <Button variant="outline" className="w-full bg-white border-gray-300 text-gray-700 hover:bg-gray-50">
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/registration">
+                <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+                  Open Account
+                </Button>
+              </Link>
             </div>
           </div>
         )}
-      </nav>
+      </div>
     </header>
   )
 }

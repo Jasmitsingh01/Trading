@@ -1,145 +1,82 @@
-// components/landing/faq-section.tsx
 'use client'
 
-import { useState, useEffect } from 'react'
-import { ChevronDown, HelpCircle } from 'lucide-react'
+import { useState } from 'react'
+import { ChevronDown } from 'lucide-react'
 
 const faqs = [
   {
-    question: 'Is there a minimum deposit required?',
-    answer: 'No, there is no minimum deposit required to open an account. However, to start trading, we recommend depositing at least $10. You can start with fractional shares, which means you can invest in expensive stocks with as little as $1.'
+    question: "How do I get started with TradeVault?",
+    answer: "Getting started is easy! Simply click 'Get Started', complete the registration form, verify your email, and complete KYC verification. You can start trading within minutes after funding your account."
   },
   {
-    question: 'What fees do you charge?',
-    answer: 'We believe in transparent pricing. Stock and ETF trading is commission-free. For cryptocurrency trading, we charge a competitive spread. There are no account maintenance fees, inactivity fees, or hidden charges. Premium features are available in our Pro plan.'
+    question: "What markets can I trade?",
+    answer: "TradeVault offers access to 150+ global markets including stocks, forex, cryptocurrencies, commodities, and indices. You can trade major exchanges from the US, Europe, Asia, and more."
   },
   {
-    question: 'How secure is my money?',
-    answer: 'Your security is our top priority. We use bank-level 256-bit encryption, two-factor authentication, and store the majority of crypto assets in cold storage. Your funds are held in segregated accounts with top-tier banks and custodians. We are fully regulated and compliant with all financial regulations.'
+    question: "Are there any fees or commissions?",
+    answer: "We offer competitive pricing with transparent fees. Stock trades start at $0 commission, forex spreads from 0.1 pips, and crypto trades at 0.25%. No hidden fees or monthly charges."
   },
   {
-    question: 'Can I withdraw my funds anytime?',
-    answer: 'Yes! You can withdraw your funds at any time. For bank transfers, withdrawals typically take 1-3 business days. Crypto withdrawals are processed within 24 hours. There are no withdrawal fees for standard bank transfers.'
+    question: "Is my money safe with TradeVault?",
+    answer: "Absolutely. We use bank-level 256-bit SSL encryption, multi-factor authentication, and cold storage for digital assets. We're fully regulated by SEC and FINRA, with FDIC insurance on cash deposits."
   },
   {
-    question: 'What markets can I trade?',
-    answer: 'You can trade U.S. stocks, ETFs, cryptocurrencies (Bitcoin, Ethereum, and 50+ others), forex pairs, and commodities. We provide access to major global exchanges and markets 24/7 for crypto and forex.'
+    question: "What is the minimum deposit?",
+    answer: "There is no minimum deposit requirement to open an account. However, we recommend starting with at least $100 to take advantage of various trading opportunities."
   },
   {
-    question: 'Do you offer a demo account?',
-    answer: 'Yes! We offer a paper trading feature with virtual funds so you can practice trading strategies without risking real money. This is perfect for beginners who want to learn how the platform works before committing real capital.'
+    question: "Can I trade on mobile?",
+    answer: "Yes! Our full-featured mobile apps for iOS and Android provide the complete trading experience. Monitor markets, execute trades, and manage your portfolio seamlessly on any device."
   },
   {
-    question: 'How do I get started?',
-    answer: 'Getting started is easy! Simply sign up with your email, complete the quick verification process, fund your account using your preferred payment method, and start trading. The entire process takes less than 10 minutes.'
+    question: "How fast are withdrawals processed?",
+    answer: "Withdrawals are typically processed within 1-3 business days for bank transfers. Crypto withdrawals are usually completed within 24 hours. No withdrawal fees for amounts over $100."
   },
   {
-    question: 'What customer support do you provide?',
-    answer: 'We offer 24/7 customer support via live chat, email, and phone. Our Pro plan members get priority support with dedicated account managers. We also have an extensive help center with tutorials, guides, and video resources.'
+    question: "Do you offer customer support?",
+    answer: "We provide 24/7 customer support via live chat, email, and phone. Our dedicated support team is always ready to assist with any questions or technical issues."
   }
 ]
 
 export function FAQSection() {
-  const [mounted, setMounted] = useState(false)
   const [openIndex, setOpenIndex] = useState<number | null>(0)
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
   return (
-    <section className="py-24 bg-slate-900 relative overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:4rem_4rem]" />
-      
-      {/* Background Gradients */}
-      <div className="absolute top-1/4 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-[100px]" />
-      <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-[100px]" />
-
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Section Header */}
-        <div className={`text-center max-w-3xl mx-auto mb-16 transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 backdrop-blur-sm mb-6">
-            <HelpCircle className="w-4 h-4 text-purple-400" />
-            <span className="text-sm font-medium text-purple-400">
-              Got Questions?
-            </span>
-          </div>
-          <h2 className="text-5xl sm:text-6xl font-bold text-white mb-6">
-            Frequently Asked
-            <span className="block bg-gradient-to-r from-blue-400 to-purple-400 text-transparent bg-clip-text mt-2">
-              Questions
-            </span>
+    <section id="faq" className="py-24 bg-white">
+      <div className="container mx-auto px-6">
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <span className="text-sm font-semibold text-emerald-600 uppercase tracking-wide">FAQ</span>
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mt-4 mb-6">
+            Frequently Asked Questions
           </h2>
-          <p className="text-xl text-slate-400">
-            Everything you need to know about our platform and services
+          <p className="text-lg text-gray-600">
+            Everything you need to know about trading with TradeVault
           </p>
         </div>
 
-        {/* FAQ Accordion */}
         <div className="max-w-3xl mx-auto space-y-4">
           {faqs.map((faq, index) => (
             <div
               key={index}
-              className={`transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
-              style={{ transitionDelay: `${index * 50}ms` }}
+              className="bg-white border-2 border-gray-100 rounded-xl overflow-hidden hover:border-emerald-300 transition-all"
             >
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full text-left bg-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-800 hover:border-blue-500/50 transition-all duration-300 group"
+                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <h3 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors flex-1">
-                    {faq.question}
-                  </h3>
-                  <div className={`w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 ${
-                    openIndex === index ? 'rotate-180' : ''
-                  }`}>
-                    <ChevronDown className="w-5 h-5 text-white" />
-                  </div>
-                </div>
-
-                {/* Answer */}
-                <div
-                  className={`grid transition-all duration-300 ${
-                    openIndex === index ? 'grid-rows-[1fr] mt-4 opacity-100' : 'grid-rows-[0fr] opacity-0'
-                  }`}
-                >
-                  <div className="overflow-hidden">
-                    <p className="text-slate-300 leading-relaxed">
-                      {faq.answer}
-                    </p>
-                  </div>
-                </div>
+                <span className="font-bold text-gray-900 pr-8">{faq.question}</span>
+                <ChevronDown
+                  className={`h-5 w-5 text-emerald-600 flex-shrink-0 transition-transform ${openIndex === index ? 'rotate-180' : ''
+                    }`}
+                />
               </button>
+              {openIndex === index && (
+                <div className="px-6 pb-5 text-gray-600 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-300">
+                  {faq.answer}
+                </div>
+              )}
             </div>
           ))}
-        </div>
-
-        {/* Contact CTA */}
-        <div className={`text-center mt-16 transition-all duration-1000 delay-500 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
-          <div className="bg-slate-900/50 backdrop-blur-sm rounded-3xl p-10 border border-slate-800 max-w-2xl mx-auto">
-            <h3 className="text-3xl font-bold text-white mb-3">
-              Still have questions?
-            </h3>
-            <p className="text-slate-400 mb-8 text-lg">
-              Can't find the answer you're looking for? Our support team is here to help.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="/contact"
-                className="px-10 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg transition-all duration-300 hover:scale-105"
-              >
-                Contact Support
-              </a>
-              <a
-                href="/help"
-                className="px-10 py-4 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-xl transition-all duration-300"
-              >
-                Visit Help Center
-              </a>
-            </div>
-          </div>
         </div>
       </div>
     </section>

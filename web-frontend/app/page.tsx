@@ -7,13 +7,13 @@ import { ChartSection } from "@/components/landing/chart-section"
 import { TestimonialsSection } from "@/components/landing/testimonials-section"
 import { FAQSection } from "@/components/landing/faq-section"
 import { CTASection } from "@/components/landing/cta-section"
-import { Footer } from  "@/components/landing/footer"
+import { Footer } from "@/components/landing/footer"
 
 export default function Home() {
   return (
-    <>
+    <div className="min-h-screen bg-white">
       <Header />
-      <main className="min-h-screen">
+      <main>
         <HeroSection />
         <FeaturesSection />
         <HowItWorksSection />
@@ -23,6 +23,6 @@ export default function Home() {
         <CTASection />
       </main>
       <Footer />
-    </>
+    </div>
   )
 }

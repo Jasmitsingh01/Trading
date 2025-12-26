@@ -29,24 +29,24 @@ const app = Fastify({
     keepAliveTimeout: 0
 });
 
-// Register plugins
 await app.register(cors, {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: process.env.FRONTEND_URLS?.split(',') || 'http://localhost:3000',
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // ✅ Added all methods
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
         'Content-Type',
         'Authorization',
         'X-Requested-With',
         'Accept',
         'Origin',
-        'Cookie'  // ✅ Important for cookie-based auth
+        'Cookie'
     ],
     exposedHeaders: ['Set-Cookie'],
-    maxAge: 86400, // 24 hours - cache preflight requests
+    maxAge: 86400,
     preflightContinue: false,
     optionsSuccessStatus: 204
 });
+
 await app.register(cookie, {
     secret: process.env.JWT_SECRET,
     parseOptions: {}

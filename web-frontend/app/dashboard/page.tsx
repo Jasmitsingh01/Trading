@@ -15,12 +15,10 @@ import { CreditCard, TrendingUp, Bell, RefreshCcw } from "lucide-react"
 import { api } from "@/lib/api"
 import { useAuth } from "@/contexts/AuthContext"
 import { useRouter } from "next/navigation"
-import { useRequireAuth } from "@/contexts/AuthContext"
 
 
 export default function DashboardPage() {
   const { user } = useAuth()
-  useRequireAuth()
   const router = useRouter()
   const [isKYCModalOpen, setIsKYCModalOpen] = useState(false)
   const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState(false)
@@ -39,7 +37,24 @@ export default function DashboardPage() {
   // Chart period states
   const [portfolioPeriod, setPortfolioPeriod] = useState<'1M' | '3M' | '1Y'>('1M')
   const [depositPeriod, setDepositPeriod] = useState<'1M' | '3M' | '1Y'>('1M')
-
+useEffect(() => {
+    if (!isLoading && !user) {
+      console.log('⚠️ No user found, redirecting to login')
+      router.push('/auth/login')
+    }
+  }, [user, isLoading, router])
+  
+  // Show isLoading while checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white text-xl">Checking authentication...</p>
+        </div>
+      </div>
+    )
+  }
   // Fetch all dashboard data
   useEffect(() => {
     if (!user) return

@@ -117,54 +117,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Authentication Actions
   // ============================
 
-const fetchUser = async (): Promise<void> => {
+  const fetchUser = async (): Promise<void> => {
     try {
-        setError(null)
-        
-        // Don't check localStorage - cookies are sent automatically
-        const response = await api.auth.getMe()
+      setError(null)
 
-        if (response?.me) {
-            setUser(response.me)
-            console.log('✅ User loaded:', response.me.email)
-        } else {
-            setUser(null)
-        }
-    } catch (err: any) {
-        console.error('❌ Failed to fetch user:', err.message)
-        setError(err.message)
+      console.log('🔵 Fetching user from API...')
+
+      // Call GraphQL - cookie will be sent automatically
+      const response = await api.auth.getMe()
+
+      console.log('📥 API Response:', response)
+
+      if (response?.me) {
+        console.log('✅ User data received:', response.me)
+        setUser(response.me)
+        console.log('✅ User state updated')
+      } else {
+        console.log('⚠️ No user data in response')
         setUser(null)
-    } finally {
-        setLoading(false)
-    }
-}
-
-const login = async (email: string, password: string): Promise<void> => {
-    try {
-        setLoading(true)
-        setError(null)
-
-        console.log('🔐 Attempting login for:', email)
-
-        const response = await api.auth.login(email, password)
-
-        if (response.success) {
-            // Cookie is set by backend - fetch user
-            await fetchUser()
-            console.log('✅ Login successful')
-            // Don't redirect here - let the page handle it
-        } else {
-            throw new Error(response.message || 'Login failed')
-        }
+      }
     } catch (err: any) {
-        const errorMessage = err.message || 'Login failed. Please try again.'
-        setError(errorMessage)
-        console.error('❌ Login error:', errorMessage)
-        throw new Error(errorMessage)
+      console.error('❌ Failed to fetch user:', err.message)
+
+      // Only clear user if it's an auth error
+      if (err.message?.includes('authenticated') || err.message?.includes('Unauthorized')) {
+        setUser(null)
+      }
+
+      // Don't set error if we're just checking auth status
+      // setError(err.message)
     } finally {
-        setLoading(false)
+      setLoading(false)
     }
-}
+  }
+
+
+  const login = async (email: string, password: string): Promise<void> => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      console.log('🔐 Attempting login for:', email)
+
+      const response = await api.auth.login(email, password)
+
+      if (response.success) {
+        // Cookie is set by backend - fetch user
+        await fetchUser()
+        console.log('✅ Login successful')
+        // Don't redirect here - let the page handle it
+      } else {
+        throw new Error(response.message || 'Login failed')
+      }
+    } catch (err: any) {
+      const errorMessage = err.message || 'Login failed. Please try again.'
+      setError(errorMessage)
+      console.error('❌ Login error:', errorMessage)
+      throw new Error(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }
 
 
   const logout = async (): Promise<void> => {

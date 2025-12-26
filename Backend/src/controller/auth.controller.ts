@@ -12,8 +12,8 @@ import RequestHandler from '../utility/requestHandler.ts';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
+  secure: process.env.NODE_ENV === 'productions',
+  sameSite: 'none' as const,
   path: '/',
   maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
 };

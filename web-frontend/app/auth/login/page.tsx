@@ -15,7 +15,6 @@ import { api } from '@/lib/api'
 import { useRequireGuest } from '@/contexts/AuthContext'
 
 export default function LoginPage() {
-    useRequireGuest()
     const [identifier, setIdentifier] = useState('')
     const [password, setPassword] = useState('')
     const [step, setStep] = useState<VerificationStep>('input')

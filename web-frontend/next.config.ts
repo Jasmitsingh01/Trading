@@ -1,14 +1,30 @@
-import type { NextConfig } from 'next'
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  reactStrictMode: true,
-  images: {
-    unoptimized: true,
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/:path*`
+      },
+      {
+        source: '/graphql',
+        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/graphql`
+      }
+    ];
   },
-  trailingSlash: true,
-  typescript: {
-    ignoreBuildErrors: true,
+  // Important: This ensures cookies work correctly with rewrites
+  async headers() {
+    return [
+      {
+        source: '/api/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Credentials', value: 'true' },
+          { key: 'Access-Control-Allow-Origin', value: 'http://localhost:3000' },
+        ],
+      },
+    ];
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;

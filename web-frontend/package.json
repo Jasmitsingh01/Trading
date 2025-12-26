@@ -2,47 +2,13 @@
   "name": "web-frontend",
   "version": "0.1.0",
   "private": true,
-  
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    
-    "cap:sync": "npx cap sync",
-    "cap:sync:dev": "npx cap sync",
-    "cap:sync:prod": "npx cap sync -c capacitor.config.prod.ts",
-    
-    "cap:open:ios": "npx cap open ios",
-    "cap:open:android": "npx cap open android",
-    
-    "cap:run:android": "npx cap run android",
-    "cap:run:ios": "npx cap run ios",
-    
-    "mobile:dev:android": "npx cap sync && npx cap run android",
-    "mobile:dev:ios": "npx cap sync && npx cap run ios",
-    
-    "mobile:build": "next build && npx cap sync -c capacitor.config.prod.ts",
-    "mobile:build:android": "npm run mobile:build && npx cap open android",
-    "mobile:build:ios": "npm run mobile:build && npx cap open ios",
-    
-    "mobile:prod:android": "next build && npx cap sync -c capacitor.config.prod.ts && npx cap open android",
-    "mobile:prod:ios": "next build && npx cap sync -c capacitor.config.prod.ts && npx cap open ios"
-    }
-,
+    "lint": "next lint"
+  },
   "dependencies": {
-    "@capacitor/android": "^8.0.0",
-    "@capacitor/app": "^8.0.0",
-    "@capacitor/camera": "^8.0.0",
-    "@capacitor/core": "^8.0.0",
-    "@capacitor/filesystem": "^8.0.0",
-    "@capacitor/haptics": "^8.0.0",
-    "@capacitor/ios": "^8.0.0",
-    "@capacitor/keyboard": "^8.0.0",
-    "@capacitor/network": "^8.0.0",
-    "@capacitor/preferences": "^8.0.0",
-    "@capacitor/splash-screen": "^8.0.0",
-    "@capacitor/status-bar": "^8.0.0",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-label": "^2.1.8",
@@ -68,7 +34,6 @@
     "ws": "^8.18.3"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.0.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

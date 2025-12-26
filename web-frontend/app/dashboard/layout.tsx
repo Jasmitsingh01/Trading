@@ -1,15 +1,12 @@
 // frontend/src/app/(dashboard)/layout.tsx
 'use client'
 
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/dashboard/Navbar";
 import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
 import { useAuth } from "@/contexts/AuthContext";
-import { isNativePlatform } from "@/lib/capacitor";
-import "../mobile.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +28,12 @@ export default function DashboardLayout({
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    setIsMobile(isNativePlatform());
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   useEffect(() => {

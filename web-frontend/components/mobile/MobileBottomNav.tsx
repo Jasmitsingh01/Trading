@@ -2,7 +2,6 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, TrendingUp, Wallet, User, BarChart3 } from 'lucide-react'
-import { hapticImpact } from '@/lib/capacitor'
 
 export function MobileBottomNav() {
     const pathname = usePathname()
@@ -16,8 +15,7 @@ export function MobileBottomNav() {
         { icon: User, label: 'Profile', path: '/dashboard/profile' },
     ]
 
-    const handleNavClick = async (path: string) => {
-        await hapticImpact('light')
+    const handleNavClick = (path: string) => {
         router.push(path)
     }
 
@@ -26,15 +24,15 @@ export function MobileBottomNav() {
             <div className="flex justify-around items-center px-2 py-2 pb-safe">
                 {navItems.map((item) => {
                     const Icon = item.icon
-                    const isActive = pathname === item.path || pathname?.startsWith(item.path + '/')
+                    const isActive = pathname === item.path || (item.path !== '/dashboard' && pathname?.startsWith(item.path + '/'))
 
                     return (
                         <button
                             key={item.path}
                             onClick={() => handleNavClick(item.path)}
-                            className={`flex flex-col items-center justify-center flex-1 py-2 px-3 rounded-lg transition-all duration-200 haptic-feedback ${isActive
-                                    ? 'text-emerald-500'
-                                    : 'text-slate-400 hover:text-slate-300'
+                            className={`flex flex-col items-center justify-center flex-1 py-2 px-3 rounded-lg transition-all duration-200 ${isActive
+                                ? 'text-emerald-500'
+                                : 'text-slate-400 hover:text-slate-300'
                                 }`}
                         >
                             <Icon

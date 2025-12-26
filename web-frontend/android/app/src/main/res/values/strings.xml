@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">bxtpro</string>
-    <string name="title_activity_main">bxtpro</string>
-    <string name="package_name">com.bxt.app</string>
-    <string name="custom_url_scheme">com.bxt.app</string>
-</resources>

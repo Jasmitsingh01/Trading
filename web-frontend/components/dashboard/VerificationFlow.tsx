@@ -5,8 +5,6 @@ import { Upload, CheckCircle, AlertCircle, Camera as CameraIcon, Phone, FileText
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
-import { CameraService, CapturedImage } from "@/lib/camera"
-import { isNativePlatform } from "@/lib/capacitor"
 import { toast } from "sonner"
 
 type VerificationStep = "identity" | "address" | "bank" | "selfie" | "phone" | "complete"
@@ -27,16 +25,15 @@ interface VerificationFlowProps {
 interface CapturedDocument {
     file: File | null
     preview: string | null
-    capturedImage: CapturedImage | null
 }
 
 export function VerificationFlow({ onComplete }: VerificationFlowProps) {
     const [currentStep, setCurrentStep] = useState<VerificationStep>("identity")
-    const [identityFront, setIdentityFront] = useState<CapturedDocument>({ file: null, preview: null, capturedImage: null })
-    const [identityBack, setIdentityBack] = useState<CapturedDocument>({ file: null, preview: null, capturedImage: null })
-    const [addressProof, setAddressProof] = useState<CapturedDocument>({ file: null, preview: null, capturedImage: null })
-    const [bankProof, setBankProof] = useState<CapturedDocument>({ file: null, preview: null, capturedImage: null })
-    const [selfieImage, setSelfieImage] = useState<CapturedDocument>({ file: null, preview: null, capturedImage: null })
+    const [identityFront, setIdentityFront] = useState<CapturedDocument>({ file: null, preview: null })
+    const [identityBack, setIdentityBack] = useState<CapturedDocument>({ file: null, preview: null })
+    const [addressProof, setAddressProof] = useState<CapturedDocument>({ file: null, preview: null })
+    const [bankProof, setBankProof] = useState<CapturedDocument>({ file: null, preview: null })
+    const [selfieImage, setSelfieImage] = useState<CapturedDocument>({ file: null, preview: null })
     const [phoneNumber, setPhoneNumber] = useState("")
     const [otpCode, setOtpCode] = useState("")
     const [otpSent, setOtpSent] = useState(false)
@@ -86,47 +83,7 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
         ))
     }
 
-    // Camera capture handler
-    const handleCameraCapture = async (
-        setter: React.Dispatch<React.SetStateAction<CapturedDocument>>,
-        documentType: string
-    ) => {
-        try {
-            // Check permissions
-            const hasPermission = await CameraService.checkPermissions()
-            if (!hasPermission) {
-                const granted = await CameraService.requestPermissions()
-                if (!granted) {
-                    toast.error('Camera permission is required')
-                    return
-                }
-            }
-
-            setUploading(true)
-
-            // Capture image
-            const capturedImage = await CameraService.pickImage(85)
-            
-            // Convert to File for compatibility
-            const blob = await fetch(capturedImage.dataUrl).then(r => r.blob())
-            const file = new File([blob], capturedImage.fileName, { type: `image/${capturedImage.format}` })
-
-            setter({
-                file,
-                preview: capturedImage.dataUrl,
-                capturedImage
-            })
-
-            toast.success(`${documentType} captured successfully`)
-        } catch (error: any) {
-            console.error('Camera capture error:', error)
-            toast.error(error.message || 'Failed to capture image')
-        } finally {
-            setUploading(false)
-        }
-    }
-
-    // File upload handler (fallback for web)
+    // File upload handler
     const handleFileUpload = async (
         file: File | null,
         setter: React.Dispatch<React.SetStateAction<CapturedDocument>>
@@ -134,18 +91,21 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
         if (!file) return
 
         try {
+            setUploading(true)
             const reader = new FileReader()
             reader.onloadend = () => {
                 setter({
                     file,
-                    preview: reader.result as string,
-                    capturedImage: null
+                    preview: reader.result as string
                 })
+                setUploading(false)
+                toast.success('File uploaded successfully')
             }
             reader.readAsDataURL(file)
         } catch (error) {
             console.error('File upload error:', error)
             toast.error('Failed to upload file')
+            setUploading(false)
         }
     }
 
@@ -199,19 +159,16 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
     const CameraUploadBox = ({
         label,
         document,
-        onCapture,
         onFileUpload,
         description
     }: {
         label: string
         document: CapturedDocument
-        onCapture: () => void
         onFileUpload: (file: File | null) => void
         description?: string
     }) => (
         <div className="border-2 border-dashed border-white/20 rounded-lg overflow-hidden hover:border-emerald-500/50 transition">
             {document.preview ? (
-                // Preview uploaded/captured image
                 <div className="relative group">
                     <img
                         src={document.preview}
@@ -219,15 +176,16 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
                         className="w-full h-48 object-cover"
                     />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
-                        <Button
-                            size="sm"
-                            onClick={onCapture}
-                            className="bg-emerald-500 hover:bg-emerald-600"
-                            disabled={uploading}
-                        >
-                            <CameraIcon className="w-4 h-4 mr-1" />
-                            Retake
-                        </Button>
+                        <label htmlFor={`file-${label}`} className="cursor-pointer">
+                            <Button
+                                size="sm"
+                                className="bg-emerald-500 hover:bg-emerald-600 pointer-events-none"
+                                disabled={uploading}
+                            >
+                                <CameraIcon className="w-4 h-4 mr-1" />
+                                Change
+                            </Button>
+                        </label>
                     </div>
                     <div className="absolute top-2 right-2 bg-emerald-500 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
                         <CheckCircle className="w-3 h-3" />
@@ -235,72 +193,35 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
                     </div>
                 </div>
             ) : (
-                // Upload options
-                <div className="p-6">
-                    <div className="text-center mb-4">
-                        <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <ImageIcon className="w-6 h-6 text-slate-400" />
-                        </div>
-                        <p className="text-sm font-medium text-white mb-1">{label}</p>
-                        {description && (
-                            <p className="text-xs text-slate-400">{description}</p>
-                        )}
+                <div className="p-6 text-center">
+                    <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <ImageIcon className="w-6 h-6 text-slate-400" />
                     </div>
-
-                    {isNativePlatform() ? (
-                        // Mobile: Show camera button
-                        <Button
-                            onClick={onCapture}
-                            disabled={uploading}
-                            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white"
-                        >
-                            {uploading ? (
-                                <>
-                                    <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                                    Processing...
-                                </>
-                            ) : (
-                                <>
-                                    <CameraIcon className="w-4 h-4 mr-2" />
-                                    Capture Photo
-                                </>
-                            )}
-                        </Button>
-                    ) : (
-                        // Web: Show file input and camera button
-                        <div className="space-y-2">
-                            <Button
-                                onClick={onCapture}
-                                disabled={uploading}
-                                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white"
-                            >
-                                <CameraIcon className="w-4 h-4 mr-2" />
-                                Take Photo
-                            </Button>
-                            <div className="relative">
-                                <input
-                                    type="file"
-                                    accept="image/*,.pdf"
-                                    onChange={(e) => onFileUpload(e.target.files?.[0] || null)}
-                                    className="hidden"
-                                    id={`file-${label}`}
-                                />
-                                <label htmlFor={`file-${label}`}>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        className="w-full"
-                                        asChild
-                                    >
-                                        <span>
-                                            <Upload className="w-4 h-4 mr-2" />
-                                            Upload File
-                                        </span>
-                                    </Button>
-                                </label>
-                            </div>
-                        </div>
+                    <p className="text-sm font-medium text-white mb-1">{label}</p>
+                    {description && (
+                        <p className="text-xs text-slate-400 mb-4">{description}</p>
                     )}
+                    <div className="relative">
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => onFileUpload(e.target.files?.[0] || null)}
+                            className="hidden"
+                            id={`file-${label}`}
+                        />
+                        <label htmlFor={`file-${label}`}>
+                            <Button
+                                type="button"
+                                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white cursor-pointer"
+                                asChild
+                            >
+                                <span>
+                                    <Upload className="w-4 h-4 mr-2" />
+                                    Choose Photo
+                                </span>
+                            </Button>
+                        </label>
+                    </div>
                 </div>
             )}
         </div>
@@ -355,20 +276,18 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
                     <div>
                         <h3 className="text-xl font-bold mb-2">Identity Verification</h3>
                         <p className="text-sm text-slate-400 mb-6">
-                            Take clear photos of both sides of your government-issued ID (Passport, Driver's License, or National ID)
+                            Upload clear photos of both sides of your government-issued ID (Passport, Driver's License, or National ID)
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             <CameraUploadBox
                                 label="ID Front Side"
                                 document={identityFront}
-                                onCapture={() => handleCameraCapture(setIdentityFront, "ID Front")}
                                 onFileUpload={(file) => handleFileUpload(file, setIdentityFront)}
                                 description="Clear photo of front side"
                             />
                             <CameraUploadBox
                                 label="ID Back Side"
                                 document={identityBack}
-                                onCapture={() => handleCameraCapture(setIdentityBack, "ID Back")}
                                 onFileUpload={(file) => handleFileUpload(file, setIdentityBack)}
                                 description="Clear photo of back side"
                             />
@@ -392,13 +311,12 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
                     <div>
                         <h3 className="text-xl font-bold mb-2">Address Verification</h3>
                         <p className="text-sm text-slate-400 mb-6">
-                            Capture or upload a recent utility bill or government document showing your address (not older than 3 months)
+                            Upload a recent utility bill or government document showing your address (not older than 3 months)
                         </p>
                         <div className="mb-6">
                             <CameraUploadBox
                                 label="Proof of Address"
                                 document={addressProof}
-                                onCapture={() => handleCameraCapture(setAddressProof, "Address Proof")}
                                 onFileUpload={(file) => handleFileUpload(file, setAddressProof)}
                                 description="Utility bill, bank statement, or tax document"
                             />
@@ -431,13 +349,12 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
                     <div>
                         <h3 className="text-xl font-bold mb-2">Bank Verification</h3>
                         <p className="text-sm text-slate-400 mb-6">
-                            Capture or upload a recent bank statement or bank account proof (not older than 3 months)
+                            Upload a recent bank statement or bank account proof (not older than 3 months)
                         </p>
                         <div className="mb-6">
                             <CameraUploadBox
                                 label="Bank Statement"
                                 document={bankProof}
-                                onCapture={() => handleCameraCapture(setBankProof, "Bank Statement")}
                                 onFileUpload={(file) => handleFileUpload(file, setBankProof)}
                                 description="Bank statement or account proof"
                             />
@@ -470,13 +387,12 @@ export function VerificationFlow({ onComplete }: VerificationFlowProps) {
                     <div>
                         <h3 className="text-xl font-bold mb-2">Selfie Verification</h3>
                         <p className="text-sm text-slate-400 mb-6">
-                            Take a clear selfie holding your ID next to your face. Make sure your face is clearly visible and matches your ID photo.
+                            Upload a clear selfie holding your ID next to your face. Make sure your face is clearly visible and matches your ID photo.
                         </p>
                         <div className="mb-6 max-w-md mx-auto">
                             <CameraUploadBox
                                 label="Selfie with ID"
                                 document={selfieImage}
-                                onCapture={() => handleCameraCapture(setSelfieImage, "Selfie")}
                                 onFileUpload={(file) => handleFileUpload(file, setSelfieImage)}
                                 description="Hold your ID next to your face"
                             />

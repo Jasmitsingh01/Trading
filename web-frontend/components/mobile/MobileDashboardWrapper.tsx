@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { isNativePlatform, hapticImpact } from '@/lib/capacitor'
 import { RefreshCw } from 'lucide-react'
 
 interface MobileDashboardWrapperProps {
@@ -16,8 +15,13 @@ export function MobileDashboardWrapper({ children, onRefresh }: MobileDashboardW
     const [isMobile, setIsMobile] = useState(false)
 
     useEffect(() => {
-        setIsMobile(isNativePlatform())
-    }, [])
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     const handleTouchStart = (e: React.TouchEvent) => {
         if (!isMobile || !onRefresh) return
@@ -36,11 +40,6 @@ export function MobileDashboardWrapper({ children, onRefresh }: MobileDashboardW
         const scrollTop = (e.currentTarget as HTMLElement).scrollTop
         if (scrollTop === 0 && distance > 0) {
             setPullDistance(Math.min(distance, 100))
-
-            // Haptic feedback at threshold
-            if (distance > 80 && pullDistance <= 80) {
-                hapticImpact('light')
-            }
         }
     }
 
@@ -49,7 +48,6 @@ export function MobileDashboardWrapper({ children, onRefresh }: MobileDashboardW
 
         if (pullDistance > 80) {
             setIsRefreshing(true)
-            await hapticImpact('medium')
 
             try {
                 await onRefresh()

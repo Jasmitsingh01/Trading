@@ -4,10 +4,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
-import { isNativePlatform } from '@/lib/capacitor'
-import { Preferences } from '@capacitor/preferences'
-import { App } from '@capacitor/app'
-import { Haptics, ImpactStyle } from '@capacitor/haptics'
 
 interface User {
   id: string
@@ -30,7 +26,6 @@ interface AuthContextType {
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
   isAuthenticated: boolean
-  isMobile: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -47,31 +42,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isMobile] = useState(isNativePlatform())
   const router = useRouter()
 
   // ============================
-  // Storage Helpers (Web + Mobile)
+  // Storage Helpers
   // ============================
 
-  const getStorageItem = async (key: string): Promise<string | null> => {
+  const getStorageItem = (key: string): string | null => {
     try {
-      if (isMobile) {
-        const { value } = await Preferences.get({ key })
-        return value
+      if (typeof window !== 'undefined') {
+        return localStorage.getItem(key)
       }
-      return localStorage.getItem(key)
+      return null
     } catch (error) {
       console.error(`Error getting ${key}:`, error)
       return null
     }
   }
 
-  const setStorageItem = async (key: string, value: string): Promise<void> => {
+  const setStorageItem = (key: string, value: string): void => {
     try {
-      if (isMobile) {
-        await Preferences.set({ key, value })
-      } else {
+      if (typeof window !== 'undefined') {
         localStorage.setItem(key, value)
       }
     } catch (error) {
@@ -79,11 +70,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const removeStorageItem = async (key: string): Promise<void> => {
+  const removeStorageItem = (key: string): void => {
     try {
-      if (isMobile) {
-        await Preferences.remove({ key })
-      } else {
+      if (typeof window !== 'undefined') {
         localStorage.removeItem(key)
       }
     } catch (error) {
@@ -91,11 +80,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const clearAllStorage = async (): Promise<void> => {
+  const clearAllStorage = (): void => {
     try {
-      if (isMobile) {
-        await Preferences.clear()
-      } else {
+      if (typeof window !== 'undefined') {
         localStorage.clear()
         sessionStorage.clear()
       }
@@ -106,33 +93,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   // ============================
-  // Haptic Feedback Helper
-  // ============================
-
-  const triggerHaptic = async (style: 'light' | 'medium' | 'heavy' = 'medium') => {
-    if (!isMobile) return
-
-    try {
-      const impactStyle = {
-        light: ImpactStyle.Light,
-        medium: ImpactStyle.Medium,
-        heavy: ImpactStyle.Heavy,
-      }[style]
-
-      await Haptics.impact({ style: impactStyle })
-    } catch (error) {
-      // Haptics not available, ignore
-    }
-  }
-
-  // ============================
   // User Management
   // ============================
 
   const fetchUser = async (): Promise<void> => {
     try {
       setError(null)
-      const token = await getStorageItem(STORAGE_KEYS.AUTH_TOKEN)
+      const token = getStorageItem(STORAGE_KEYS.AUTH_TOKEN)
 
       if (!token) {
         console.log('⚠️ No auth token found')
@@ -148,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(response.me)
 
         // Update stored user data
-        await setStorageItem(STORAGE_KEYS.USER, JSON.stringify(response.me))
+        setStorageItem(STORAGE_KEYS.USER, JSON.stringify(response.me))
 
         console.log('✅ User loaded:', response.me.email)
       } else {
@@ -161,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(err.message)
 
       // If token is expired or invalid, clear auth
-      if (err.message.includes('token') || err.message.includes('401')) {
+      if (err.message?.includes('token') || err.message?.includes('401')) {
         await handleInvalidAuth()
       } else {
         setUser(null)
@@ -173,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const handleInvalidAuth = async (): Promise<void> => {
     setUser(null)
-    await clearAllStorage()
+    clearAllStorage()
 
     // Only redirect if on protected route
     if (typeof window !== 'undefined') {
@@ -183,11 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         currentPath.startsWith('/trading') ||
         currentPath.startsWith('/portfolio')
       ) {
-        if (isMobile) {
-          window.location.href = '/auth/login'
-        } else {
-          router.push('/auth/login')
-        }
+        router.push('/auth/login')
       }
     }
   }
@@ -210,41 +173,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Store authentication data
         if (token) {
-          await setStorageItem(STORAGE_KEYS.AUTH_TOKEN, token)
+          setStorageItem(STORAGE_KEYS.AUTH_TOKEN, token)
         }
         if (refreshToken) {
-          await setStorageItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken)
+          setStorageItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken)
         }
         if (expiresAt) {
-          await setStorageItem(STORAGE_KEYS.EXPIRES_AT, expiresAt.toString())
+          setStorageItem(STORAGE_KEYS.EXPIRES_AT, expiresAt.toString())
         }
 
         // Store user data
-        await setStorageItem(STORAGE_KEYS.USER, JSON.stringify(userData))
+        setStorageItem(STORAGE_KEYS.USER, JSON.stringify(userData))
 
         setUser(userData)
-
-        // Haptic feedback on successful login (mobile only)
-        await triggerHaptic('medium')
 
         console.log('✅ Login successful:', userData.email)
 
         // Redirect to dashboard
-        if (isMobile) {
-          window.location.href = '/dashboard'
-        } else {
-          router.push('/dashboard')
-        }
+        router.push('/dashboard')
       } else {
         throw new Error(response.message || 'Login failed')
       }
     } catch (err: any) {
       const errorMessage = err.message || 'Login failed. Please try again.'
       setError(errorMessage)
-
-      // Haptic feedback on error (mobile only)
-      await triggerHaptic('heavy')
-
       console.error('❌ Login error:', errorMessage)
       throw new Error(errorMessage)
     } finally {
@@ -269,34 +221,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null)
       setError(null)
 
-      // Clear all storage (mobile + web)
-      await clearAllStorage()
-
-      // Haptic feedback (mobile only)
-      await triggerHaptic('light')
+      // Clear all storage
+      clearAllStorage()
 
       console.log('✅ Logout complete')
 
       // Redirect to login
-      if (isMobile) {
-        // Hard redirect on mobile
-        window.location.href = '/auth/login'
-      } else {
-        // Use Next.js router on web
-        router.push('/auth/login')
-      }
+      router.push('/auth/login')
     } catch (err) {
       console.error('❌ Logout error:', err)
 
       // Force logout even on error
       setUser(null)
-      await clearAllStorage()
-
-      if (isMobile) {
-        window.location.href = '/auth/login'
-      } else {
-        router.push('/auth/login')
-      }
+      clearAllStorage()
+      router.push('/auth/login')
     } finally {
       setLoading(false)
     }
@@ -305,35 +243,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = async (): Promise<void> => {
     await fetchUser()
   }
-
-  // ============================
-  // App Lifecycle Handling (Mobile)
-  // ============================
-
-  useEffect(() => {
-    if (!isMobile) return
-
-    let listenerHandle: any = null
-
-    // Handle app state changes on mobile
-    const setupListener = async () => {
-      listenerHandle = await App.addListener('appStateChange', async ({ isActive }) => {
-        if (isActive) {
-          console.log('📱 App became active, refreshing user...')
-          // Refresh user data when app comes to foreground
-          await refreshUser()
-        }
-      })
-    }
-
-    setupListener()
-
-    return () => {
-      if (listenerHandle) {
-        listenerHandle.remove()
-      }
-    }
-  }, [isMobile])
 
   // ============================
   // Initial Load
@@ -352,7 +261,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return
 
     const checkTokenExpiry = async () => {
-      const expiresAt = await getStorageItem(STORAGE_KEYS.EXPIRES_AT)
+      const expiresAt = getStorageItem(STORAGE_KEYS.EXPIRES_AT)
       if (!expiresAt) return
 
       const expiryTime = parseInt(expiresAt)
@@ -363,7 +272,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (timeUntilExpiry < 5 * 60 * 1000 && timeUntilExpiry > 0) {
         console.log('🔄 Token expiring soon, refreshing...')
         try {
-          const refreshToken = await getStorageItem(STORAGE_KEYS.REFRESH_TOKEN)
+          const refreshToken = getStorageItem(STORAGE_KEYS.REFRESH_TOKEN)
           if (refreshToken) {
             // Call your refresh token API here
             // const response = await api.auth.refreshToken(refreshToken)
@@ -394,15 +303,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
     refreshUser,
     isAuthenticated: !!user,
-    isMobile,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
-
-// ============================
-// Hook
-// ============================
 
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext)
@@ -411,10 +315,6 @@ export function useAuth(): AuthContextType {
   }
   return context
 }
-
-// ============================
-// Additional Utility Hooks
-// ============================
 
 export function useRequireAuth(): void {
   const { isAuthenticated, loading } = useAuth()

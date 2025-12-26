@@ -1,43 +1,143 @@
 'use client'
 
+
+
 import { useState, useEffect } from "react"
+
 import Link from "next/link"
+
 import { Button } from "@/components/ui/button"
+
 import { Input } from "@/components/ui/input"
+
 import { Modal } from "@/components/ui/modal"
+
 import { StatCard } from "@/components/ui/StatCard"
+
 import { RecentActivityTable } from "@/components/dashboard/RecentActivityTable"
+
 import { Watchlist } from "@/components/dashboard/Watchlist"
+
 import { Notifications } from "@/components/dashboard/Notifications"
+
 import { ChartCard } from "@/components/dashboard/ChartCard"
+
 import { MobileDashboardWrapper } from "@/components/mobile/MobileDashboardWrapper"
+
 import { CreditCard, TrendingUp, Bell, RefreshCcw } from "lucide-react"
+
 import { api } from "@/lib/api"
+
 import { useAuth } from "@/contexts/AuthContext"
+
 import { useRouter } from "next/navigation"
 
 
+import { useRequireAuth } from "@/contexts/AuthContext"
+
+
+
+
+
 export default function DashboardPage() {
+
   const { user } = useAuth()
+
+
+  useRequireAuth()
+
   const router = useRouter()
+
   const [isKYCModalOpen, setIsKYCModalOpen] = useState(false)
+
   const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState(false)
+
   const [newWatchlistSymbol, setNewWatchlistSymbol] = useState("")
+
   const [newWatchlistType, setNewWatchlistType] = useState<"cryptocurrency" | "stock" | "forex" | "commodity">("cryptocurrency")
+
   const [searchResults, setSearchResults] = useState<any[]>([])
+
   const [isSearching, setIsSearching] = useState(false)
+
   const [isLoading, setIsLoading] = useState(true)
+
   const [error, setError] = useState("")
 
+
+
   // Dynamic data from API
+
   const [dashboardData, setDashboardData] = useState<any>(null)
+
   const [userBalance, setUserBalance] = useState<any>(null)
+
   const [liveWatchlist, setLiveWatchlist] = useState<any[]>([])
 
+
+
   // Chart period states
+
   const [portfolioPeriod, setPortfolioPeriod] = useState<'1M' | '3M' | '1Y'>('1M')
+
   const [depositPeriod, setDepositPeriod] = useState<'1M' | '3M' | '1Y'>('1M')
 
+
+
+
+
+useEffect(() => {
+
+
+    if (!isLoading && !user) {
+
+
+      console.log('⚠️ No user found, redirecting to login')
+
+
+      router.push('/auth/login')
+
+
+    }
+
+
+  }, [user, isLoading, router])
+
+
+  
+
+
+  // Show isLoading while checking auth
+
+
+  if (isLoading) {
+
+
+    return (
+
+
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 flex items-center justify-center">
+
+
+        <div className="text-center">
+
+
+          <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+
+
+          <p className="text-white text-xl">Checking authentication...</p>
+
+
+        </div>
+
+
+      </div>
+
+
+    )
+
+
+  }
   // Fetch all dashboard data
   useEffect(() => {
     if (!user) return

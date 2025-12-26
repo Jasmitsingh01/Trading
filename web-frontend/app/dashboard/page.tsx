@@ -17,7 +17,6 @@ import { useAuth } from "@/contexts/AuthContext"
 import { useRouter } from "next/navigation"
 
 
-
 export default function DashboardPage() {
   const { user } = useAuth()
   const router = useRouter()

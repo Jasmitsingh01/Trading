@@ -3,6 +3,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import {
     LayoutDashboard,
@@ -13,7 +14,7 @@ import {
     Menu,
     X,
     Bell,
-    TrendingUp
+    TrendingUp,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
@@ -61,8 +62,14 @@ export default function AdminLayout({
                     {/* Logo */}
                     <div className="flex items-center justify-between p-8">
                         <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                                <TrendingUp className="h-6 w-6 text-white" />
+                            <div className="h-12 w-12 rounded-xl overflow-hidden shadow-lg">
+                                <Image
+                                    src="/logo.jpeg"
+                                    alt="TradingPro Logo"
+                                    width={48}
+                                    height={48}
+                                    className="h-full w-full object-cover"
+                                />
                             </div>
                             <div>
                                 <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent">
@@ -93,8 +100,8 @@ export default function AdminLayout({
                                     <Button
                                         variant={isActive ? 'default' : 'ghost'}
                                         className={`w-full justify-start gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 ${isActive
-                                                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 translate-x-1'
-                                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white hover:translate-x-1'
+                                            ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 translate-x-1'
+                                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white hover:translate-x-1'
                                             }`}
                                     >
                                         <span className="flex h-7 w-7 items-center justify-center rounded-md bg-white/5">

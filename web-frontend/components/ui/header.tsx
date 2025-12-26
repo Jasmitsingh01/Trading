@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { TrendingUp, Menu, X, ChevronDown } from 'lucide-react'
+import Image from 'next/image'
+import { Menu, X, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 const companyMenuItems = [
@@ -52,8 +53,14 @@ export default function Header() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3 group">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm group-hover:shadow-emerald-200 transition-all">
-              <TrendingUp className="h-6 w-6 text-white" strokeWidth={2.5} />
+            <div className="h-12 w-12 rounded-xl overflow-hidden shadow-sm group-hover:shadow-md transition-all">
+              <Image
+                src="/logo.jpeg"
+                alt="BXTPRO Logo"
+                width={48}
+                height={48}
+                className="h-full w-full object-cover"
+              />
             </div>
             <span className="text-2xl font-bold text-gray-900">BXTPRO</span>
           </Link>

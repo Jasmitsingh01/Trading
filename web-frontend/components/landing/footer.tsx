@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { TrendingUp, Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react'
+import Image from 'next/image'
+import { Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react'
 
 export function Footer() {
   return (
@@ -11,8 +12,14 @@ export function Footer() {
           {/* Company Info */}
           <div className="lg:col-span-2">
             <div className="flex items-center space-x-3 mb-4">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm">
-                <TrendingUp className="h-6 w-6 text-white" strokeWidth={2.5} />
+              <div className="h-12 w-12 rounded-xl overflow-hidden shadow-sm">
+                <Image
+                  src="/logo.jpeg"
+                  alt="BXTPRO Logo"
+                  width={48}
+                  height={48}
+                  className="h-full w-full object-cover"
+                />
               </div>
               <span className="text-2xl font-bold text-gray-900">BXTPRO</span>
             </div>

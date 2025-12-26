@@ -15,11 +15,10 @@ import { CreditCard, TrendingUp, Bell, RefreshCcw } from "lucide-react"
 import { api } from "@/lib/api"
 import { useAuth } from "@/contexts/AuthContext"
 import { useRouter } from "next/navigation"
-import { useRequireAuth } from "@/contexts/AuthContext"
+
 
 
 export default function DashboardPage() {
-  useRequireAuth()
   const { user } = useAuth()
   const router = useRouter()
   const [isKYCModalOpen, setIsKYCModalOpen] = useState(false)

@@ -11,8 +11,8 @@ const contactMethods = [
         icon: Mail,
         title: 'Email Us',
         description: 'Response within 24 hours',
-        contact: 'support@tradevault.com',
-        action: 'mailto:support@tradevault.com'
+        contact: 'support@BXTPRO.com',
+        action: 'mailto:support@BXTPRO.com'
     },
     {
         icon: Phone,
@@ -42,19 +42,19 @@ const offices = [
         city: 'New York',
         address: '123 Trading Street, NY 10001',
         phone: '+1 (800) 123-4567',
-        email: 'ny@tradevault.com'
+        email: 'ny@BXTPRO.com'
     },
     {
         city: 'London',
         address: '456 Finance Ave, London EC2N',
         phone: '+44 20 1234 5678',
-        email: 'london@tradevault.com'
+        email: 'london@BXTPRO.com'
     },
     {
         city: 'Singapore',
         address: '789 Market Road, Singapore 018956',
         phone: '+65 6123 4567',
-        email: 'sg@tradevault.com'
+        email: 'sg@BXTPRO.com'
     }
 ]
 

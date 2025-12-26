@@ -36,7 +36,7 @@ const milestones = [
   {
     year: '2020',
     title: 'Company Founded',
-    description: 'TradeVault was established with a vision to revolutionize online trading.',
+    description: 'BXTPRO was established with a vision to revolutionize online trading.',
     icon: Lightbulb
   },
   {
@@ -113,7 +113,7 @@ export default function AboutPage() {
             <div className={`text-center max-w-4xl mx-auto transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-md bg-emerald-50 border border-emerald-200 mb-6">
                 <Building2 className="h-4 w-4 text-emerald-600" />
-                <span className="text-sm font-medium text-emerald-700">About TradeVault</span>
+                <span className="text-sm font-medium text-emerald-700">About BXTPRO</span>
               </div>
               <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 mb-6 leading-tight">
                 Building the Future of
@@ -122,7 +122,7 @@ export default function AboutPage() {
                 </span>
               </h1>
               <p className="text-lg text-gray-600 leading-relaxed mb-8 max-w-3xl mx-auto">
-                Founded in 2020, TradeVault has grown from a small startup to a leading global trading platform,
+                Founded in 2020, BXTPRO has grown from a small startup to a leading global trading platform,
                 serving over 150,000 active traders across 150+ markets worldwide with institutional-grade infrastructure.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -347,7 +347,7 @@ export default function AboutPage() {
                 Ready to Start Trading?
               </h2>
               <p className="text-lg text-gray-300 mb-8">
-                Join 150,000+ traders who trust TradeVault for their investments
+                Join 150,000+ traders who trust BXTPRO for their investments
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/registration">

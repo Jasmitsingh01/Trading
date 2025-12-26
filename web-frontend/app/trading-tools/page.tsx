@@ -284,8 +284,8 @@ export default function TradingToolsPage() {
                                     key={category}
                                     onClick={() => setSelectedCategory(category)}
                                     className={`px-6 py-2 font-semibold transition-all text-sm ${selectedCategory === category
-                                            ? 'bg-emerald-600 text-white'
-                                            : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-emerald-300'
+                                        ? 'bg-emerald-600 text-white'
+                                        : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-emerald-300'
                                         }`}
                                 >
                                     {category}
@@ -450,7 +450,7 @@ export default function TradingToolsPage() {
                                 Access All Tools for Free
                             </h2>
                             <p className="text-lg text-gray-300 mb-8">
-                                Every professional trading tool is included with your free TradeVault account
+                                Every professional trading tool is included with your free BXTPRO account
                             </p>
                             <Link href="/auth/login">
                                 <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-12">

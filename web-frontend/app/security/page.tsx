@@ -108,7 +108,7 @@ const bestPractices = [
     },
     {
         title: 'Verify Communications',
-        description: 'Always verify emails and messages claiming to be from TradeVault through official channels.',
+        description: 'Always verify emails and messages claiming to be from BXTPRO through official channels.',
         icon: AlertCircle
     },
     {

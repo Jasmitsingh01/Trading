@@ -28,7 +28,7 @@ export function CTASection() {
                         Ready to Start Trading?
                     </h2>
                     <p className="text-xl text-emerald-50 max-w-2xl mx-auto">
-                        Join thousands of traders who trust TradeVault for their investment needs. Open your free account today and start trading in minutes.
+                        Join thousands of traders who trust BXTPRO for their investment needs. Open your free account today and start trading in minutes.
                     </p>
 
                     {/* Benefits Grid */}

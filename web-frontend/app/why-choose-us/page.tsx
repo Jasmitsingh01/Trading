@@ -92,7 +92,7 @@ const testimonials = [
         name: 'Michael Chen',
         role: 'Day Trader',
         avatar: 'MC',
-        quote: 'The execution speed is incredible. I\'ve tried 5 different platforms and TradeVault is hands down the fastest.',
+        quote: 'The execution speed is incredible. I\'ve tried 5 different platforms and BXTPRO is hands down the fastest.',
         rating: 5
     },
     {
@@ -140,7 +140,7 @@ export default function WhyChooseUsPage() {
                             <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 mb-6 leading-tight">
                                 Why Traders Choose
                                 <span className="block text-emerald-600 mt-2">
-                                    TradeVault
+                                    BXTPRO
                                 </span>
                             </h1>
                             <p className="text-lg text-gray-600 leading-relaxed max-w-3xl mx-auto">
@@ -274,7 +274,7 @@ export default function WhyChooseUsPage() {
                                         <tr className="border-b-2 border-gray-200">
                                             <th className="text-left p-6 text-gray-900 font-bold">Feature</th>
                                             <th className="text-center p-6">
-                                                <div className="text-emerald-600 font-bold text-lg">TradeVault</div>
+                                                <div className="text-emerald-600 font-bold text-lg">BXTPRO</div>
                                             </th>
                                             <th className="text-center p-6 text-gray-600 font-bold">Other Platforms</th>
                                         </tr>
@@ -376,7 +376,7 @@ export default function WhyChooseUsPage() {
                                 Ready to Experience the Difference?
                             </h2>
                             <p className="text-lg text-gray-300 mb-8">
-                                Join 150,000+ traders who've made the switch to TradeVault
+                                Join 150,000+ traders who've made the switch to BXTPRO
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                                 <Link href="/registration">

@@ -45,8 +45,8 @@ export default function Header() {
 
   return (
     <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled
-        ? 'bg-white shadow-md border-b border-gray-200'
-        : 'bg-white/95 backdrop-blur-md border-b border-gray-100'
+      ? 'bg-white shadow-md border-b border-gray-200'
+      : 'bg-white/95 backdrop-blur-md border-b border-gray-100'
       }`}>
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
@@ -55,7 +55,7 @@ export default function Header() {
             <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm group-hover:shadow-emerald-200 transition-all">
               <TrendingUp className="h-6 w-6 text-white" strokeWidth={2.5} />
             </div>
-            <span className="text-2xl font-bold text-gray-900">TradeVault</span>
+            <span className="text-2xl font-bold text-gray-900">BXTPRO</span>
           </Link>
 
           {/* Desktop Navigation */}

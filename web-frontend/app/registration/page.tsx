@@ -156,7 +156,7 @@ export default function RegistrationPage() {
                 </span>
               </h1>
               <p className="text-lg text-gray-600 leading-relaxed max-w-3xl mx-auto mb-8">
-                Open your TradeVault account in just 4 easy steps. Fast, secure, and fully compliant with global regulations.
+                Open your BXTPRO account in just 4 easy steps. Fast, secure, and fully compliant with global regulations.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/auth/open-account">
@@ -383,7 +383,7 @@ export default function RegistrationPage() {
                 Ready to Get Started?
               </h2>
               <p className="text-lg text-gray-300 mb-8">
-                Join 150,000+ traders who trust TradeVault. Create your account today.
+                Join 150,000+ traders who trust BXTPRO. Create your account today.
               </p>
               <Link href="/auth/login">
                 <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-12">

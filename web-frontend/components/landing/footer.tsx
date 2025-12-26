@@ -14,12 +14,12 @@ export function Footer() {
               <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm">
                 <TrendingUp className="h-6 w-6 text-white" strokeWidth={2.5} />
               </div>
-              <span className="text-2xl font-bold text-gray-900">TradeVault</span>
+              <span className="text-2xl font-bold text-gray-900">BXTPRO</span>
             </div>
             <p className="text-gray-600 mb-6 max-w-sm leading-relaxed">
               Professional trading platform trusted by thousands of traders worldwide. Trade stocks, forex, crypto, and more with confidence.
             </p>
-       
+
           </div>
 
           {/* Platform */}
@@ -59,13 +59,13 @@ export function Footer() {
           </div>
         </div>
 
-        
+
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-gray-300 text-center text-sm text-gray-600">
-          <p className="font-medium text-gray-900">© 2025 TradeVault. All rights reserved.</p>
+          <p className="font-medium text-gray-900">© 2025 BXTPRO. All rights reserved.</p>
           <p className="mt-2 text-gray-500">
-            Trading involves risk. Only invest what you can afford to lose. TradeVault is registered with SEC and member of FINRA/SIPC.
+            Trading involves risk. Only invest what you can afford to lose. BXTPRO is registered with SEC and member of FINRA/SIPC.
           </p>
         </div>
       </div>

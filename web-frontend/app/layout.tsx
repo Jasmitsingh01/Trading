@@ -8,7 +8,7 @@ import { Toaster } from 'sonner'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'TradeVault - Trading Platform',
+  title: 'BXTPRO - Trading Platform',
   description: 'Advanced trading platform for crypto and forex',
 }
 

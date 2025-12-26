@@ -225,7 +225,7 @@ export function HeroSection() {
                                     {/* App Header */}
                                     <div className="bg-emerald-600 px-6 py-4 text-white">
                                         <div className="flex items-center justify-between">
-                                            <h3 className="font-bold text-lg">TradeVault</h3>
+                                            <h3 className="font-bold text-lg">BXTPRO</h3>
                                             <div className="flex gap-3">
                                                 <Bell className="w-5 h-5" />
                                                 <BarChart3 className="w-5 h-5" />

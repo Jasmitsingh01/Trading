@@ -5,19 +5,19 @@ import { ChevronDown } from 'lucide-react'
 
 const faqs = [
   {
-    question: "How do I get started with TradeVault?",
+    question: "How do I get started with BXTPRO?",
     answer: "Getting started is easy! Simply click 'Get Started', complete the registration form, verify your email, and complete KYC verification. You can start trading within minutes after funding your account."
   },
   {
     question: "What markets can I trade?",
-    answer: "TradeVault offers access to 150+ global markets including stocks, forex, cryptocurrencies, commodities, and indices. You can trade major exchanges from the US, Europe, Asia, and more."
+    answer: "BXTPRO offers access to 150+ global markets including stocks, forex, cryptocurrencies, commodities, and indices. You can trade major exchanges from the US, Europe, Asia, and more."
   },
   {
     question: "Are there any fees or commissions?",
     answer: "We offer competitive pricing with transparent fees. Stock trades start at $0 commission, forex spreads from 0.1 pips, and crypto trades at 0.25%. No hidden fees or monthly charges."
   },
   {
-    question: "Is my money safe with TradeVault?",
+    question: "Is my money safe with BXTPRO?",
     answer: "Absolutely. We use bank-level 256-bit SSL encryption, multi-factor authentication, and cold storage for digital assets. We're fully regulated by SEC and FINRA, with FDIC insurance on cash deposits."
   },
   {
@@ -50,7 +50,7 @@ export function FAQSection() {
             Frequently Asked Questions
           </h2>
           <p className="text-lg text-gray-600">
-            Everything you need to know about trading with TradeVault
+            Everything you need to know about trading with BXTPRO
           </p>
         </div>
 

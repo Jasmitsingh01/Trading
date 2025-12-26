@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { Modal } from "@/components/ui/modal"
@@ -10,6 +10,8 @@ import { PositionsTable } from "@/components/dashboard/PositionsTable"
 import { AllocationCard } from "@/components/dashboard/AllocationCard"
 import { Props as ChartProps } from "react-apexcharts"
 import { api } from "@/lib/api"
+import { useCryptoPrices } from "@/hooks/useBinanceWebSocket"
+import useFinnhubForex from "@/hooks/useFinnhubForex"
 
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false })
 
@@ -24,7 +26,6 @@ function calculateAllocations(positions: any[], balance: any) {
     const totalValue = balance.totalBalance
     const allocations: any[] = []
 
-    // Group by asset type
     const cryptoPositions = positions.filter(p => p.assetType === 'crypto' || p.assetType === 'cryptocurrency')
     const forexPositions = positions.filter(p => p.assetType === 'forex')
 
@@ -59,12 +60,41 @@ function calculateAllocations(positions: any[], balance: any) {
     return allocations
 }
 
+// Helper to get timeframe in seconds for API
+function getTimeframeInSeconds(timeframe: string): { from: number; to: number; resolution: string; seconds: number } {
+    const now = Math.floor(Date.now() / 1000)
+    const timeframes: Record<string, { seconds: number; resolution: string }> = {
+        '1D': { seconds: 86400, resolution: '5' },
+        '1W': { seconds: 604800, resolution: '15' },
+        '1M': { seconds: 2592000, resolution: '60' },
+        '3M': { seconds: 7776000, resolution: '240' },
+        '1Y': { seconds: 31536000, resolution: 'D' },
+        '5Y': { seconds: 157680000, resolution: 'W' },
+        'Max': { seconds: 315360000, resolution: 'M' },
+        'All': { seconds: 2592000, resolution: '60' }
+    }
+
+    const config = timeframes[timeframe] || timeframes['1M']
+    return {
+        from: now - config.seconds,
+        to: now,
+        resolution: config.resolution,
+        seconds: config.seconds
+    }
+}
+
 export default function PortfolioDashboard() {
     const [activeTab, setActiveTab] = useState("All Assets")
     const [chartType, setChartType] = useState("1D")
     const [isDepositModalOpen, setIsDepositModalOpen] = useState(false)
-    const [token, setToken] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(true)
+    const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const [authError, setAuthError] = useState<string | null>(null)
+    const [isChartLoading, setIsChartLoading] = useState(false)
+
+    // Chart data state
+    const [chartData, setChartData] = useState<any[]>([])
+    const chartRef = useRef<any>(null)
 
     // Dynamic data from backend
     const [portfolio, setPortfolio] = useState<any>(null)
@@ -74,78 +104,236 @@ export default function PortfolioDashboard() {
     const [depositAmount, setDepositAmount] = useState("")
     const [paymentMethod, setPaymentMethod] = useState("bank_transfer")
 
-    // Portfolio summary data (dynamic)
-    const portfolioStats = {
-        totalValue: balance ? `$${balance.totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "$0.00",
-        cashUSD: balance ? `$${balance.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "$0.00",
-        totalPL: portfolio ? `$${portfolio.totalProfitLoss.toLocaleString('en-US', { minimumFractionDigits: 2 })} (${portfolio.profitLossPercentage.toFixed(2)}%)` : "$0 (0%)",
-        btcLedger: balance ? `$${balance.totalInvested.toLocaleString('en-US', { minimumFractionDigits: 2 })} (${balance.totalInvested > 0 ? ((balance.totalProfit / balance.totalInvested) * 100).toFixed(2) : '0.00'}%)` : "$0 (0%)"
+    // Live price states
+    const [livePrices, setLivePrices] = useState<Map<string, any>>(new Map())
+
+    // Extract crypto symbols from positions
+    const cryptoSymbols = positions
+        .filter(p => p.assetType === 'crypto' || p.assetType === 'cryptocurrency')
+        .map(p => p.symbol.toUpperCase())
+
+    // Extract forex symbols from positions
+    const forexSymbols = positions
+        .filter(p => p.assetType === 'forex')
+        .map(p => p.symbol)
+
+    // Subscribe to crypto WebSocket for live prices
+    const { allData: cryptoData, isConnected: cryptoConnected } = useCryptoPrices(
+        cryptoSymbols,
+        cryptoSymbols.length > 0 && isAuthenticated
+    )
+
+    // Subscribe to forex WebSocket for live prices
+    const {
+        forexRates,
+        isConnected: forexConnected
+    } = useFinnhubForex({
+        symbolsToSubscribe: forexSymbols,
+        autoConnect: forexSymbols.length > 0 && isAuthenticated,
+        autoSubscribe: forexSymbols.length > 0 && isAuthenticated
+    })
+
+    // Update live prices when WebSocket data changes
+    useEffect(() => {
+        const updatedPrices = new Map<string, any>()
+
+        // Add crypto prices
+        cryptoData.forEach((data, symbol) => {
+            updatedPrices.set(symbol, {
+                price: parseFloat(data.price),
+                change: parseFloat(data.changePercent),
+                high: parseFloat(data.high),
+                low: parseFloat(data.low),
+                volume: parseFloat(data.volume),
+                type: 'crypto'
+            })
+        })
+
+        // Add forex prices
+        Object.entries(forexRates).forEach(([symbol, data]: [string, any]) => {
+            updatedPrices.set(symbol, {
+                price: data.price,
+                change: data.percentChange || 0,
+                timestamp: data.timestamp,
+                type: 'forex'
+            })
+        })
+
+        setLivePrices(updatedPrices)
+    }, [cryptoData, forexRates])
+
+    // Calculate portfolio stats with live prices
+    const calculateLiveStats = () => {
+        if (!positions || !balance) return null
+
+        let totalValue = balance.availableBalance
+        let totalPnL = 0
+        let totalInvested = 0
+
+        positions.forEach(pos => {
+            const livePrice = livePrices.get(pos.symbol)
+            const currentPrice = livePrice?.price || pos.currentPrice || pos.averagePrice
+            const marketValue = currentPrice * pos.quantity
+
+            totalValue += marketValue
+            totalInvested += pos.averagePrice * pos.quantity
+            totalPnL += marketValue - (pos.averagePrice * pos.quantity)
+        })
+
+        const pnlPercent = totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0
+
+        return {
+            totalValue,
+            totalPnL,
+            pnlPercent,
+            totalInvested
+        }
     }
 
-    // Get token from localStorage
-    useEffect(() => {
-        const storedToken = localStorage.getItem('authToken') || localStorage.getItem('token')
-        setToken(storedToken)
-    }, [])
+    const liveStats = calculateLiveStats()
 
-    // Fetch portfolio, balance, positions, and transactions
-    useEffect(() => {
-        const fetchData = async () => {
-            if (!token) return
+    // Portfolio summary data (with live updates)
+    const portfolioStats = {
+        totalValue: liveStats ? `$${liveStats.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "$0.00",
+        cashUSD: balance ? `$${balance.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "$0.00",
+        totalPL: liveStats ? `$${liveStats.totalPnL.toLocaleString('en-US', { minimumFractionDigits: 2 })} (${liveStats.pnlPercent.toFixed(2)}%)` : "$0 (0%)",
+        btcLedger: liveStats ? `$${liveStats.totalInvested.toLocaleString('en-US', { minimumFractionDigits: 2 })} (${liveStats.totalInvested > 0 ? ((liveStats.totalPnL / liveStats.totalInvested) * 100).toFixed(2) : '0.00'}%)` : "$0 (0%)"
+    }
 
-            setIsLoading(true)
+    // Fetch chart data based on timeframe
+    const fetchChartData = async (timeframe: string) => {
+        try {
+            setIsChartLoading(true)
+            console.log(`📊 Fetching chart data for ${timeframe}...`)
+
+            const { from, to, resolution } = getTimeframeInSeconds(timeframe)
+
+
+        } catch (error) {
+            console.error('❌ Error fetching chart data:', error)
+            setChartData(generateFallbackData(timeframe))
+        } finally {
+            setIsChartLoading(false)
+        }
+    }
+
+    // Generate fallback data
+    const generateFallbackData = (timeframe: string) => {
+        const now = Date.now()
+        const points: [number, number][] = []
+        const { seconds } = getTimeframeInSeconds(timeframe)
+        const numPoints = Math.min(50, Math.floor(seconds / 3600))
+        const interval = seconds * 1000 / numPoints
+
+        let price = 67000
+        for (let i = 0; i < numPoints; i++) {
+            const timestamp = now - ((numPoints - i) * interval)
+            price = price + (Math.random() - 0.5) * 2000
+            price = Math.max(45000, Math.min(70000, price))
+            points.push([timestamp, Math.round(price)])
+        }
+
+        return points
+    }
+
+    // Check authentication and fetch initial data
+    useEffect(() => {
+        const initializeData = async () => {
             try {
-                const [portfolioData, balanceData, positionsData, transactionsData] = await Promise.all([
-                    api.user.getPortfolio().catch(() => null),
-                    api.user.getBalance().catch(() => null),
-                    api.positions.getAll().catch(() => ({ positions: [] })),
-                    api.transactions.getAll({ page: 1, limit: 10 }).catch(() => ({ transactions: { transactions: [] } }))
-                ])
+                setIsLoading(true)
+                console.log('🔐 Checking authentication...')
 
-                setPortfolio(portfolioData?.userPortfolio || {
-                    totalValue: 0,
-                    totalInvested: 0,
-                    totalProfitLoss: 0,
-                    profitLossPercentage: 0,
-                    activePositions: 0,
-                    closedPositions: 0
-                })
-                setBalance(balanceData?.userBalance || {
-                    totalBalance: 0,
-                    availableBalance: 0,
-                    totalInvested: 0,
-                    totalProfit: 0,
-                    totalLoss: 0
-                })
-                setPositions(positionsData?.positions || [])
-                setTransactions(transactionsData?.transactions?.transactions || [])
-            } catch (error) {
-                console.error('Error fetching portfolio data:', error)
+                const meData = await api.auth.getMe()
+
+                if (meData?.me) {
+                    console.log('✅ User authenticated:', meData.me.email)
+                    setIsAuthenticated(true)
+                    setAuthError(null)
+
+                    console.log('📊 Fetching portfolio data...')
+                    const [portfolioData, balanceData, positionsData, transactionsData] = await Promise.all([
+                        api.user.getPortfolio().catch((err) => {
+                            console.error('❌ Portfolio fetch error:', err)
+                            return null
+                        }),
+                        api.user.getBalance().catch((err) => {
+                            console.error('❌ Balance fetch error:', err)
+                            return null
+                        }),
+                        api.positions.getAll().catch((err) => {
+                            console.error('❌ Positions fetch error:', err)
+                            return { positions: [] }
+                        }),
+                        api.transactions.getAll({ page: 1, limit: 10 }).catch((err) => {
+                            console.error('❌ Transactions fetch error:', err)
+                            return { transactions: { transactions: [] } }
+                        })
+                    ])
+
+                    console.log('✅ Data fetched successfully')
+                    console.log('📈 Positions:', positionsData?.positions)
+
+                    setPortfolio(portfolioData?.userPortfolio || {
+                        totalValue: 0,
+                        totalInvested: 0,
+                        totalProfitLoss: 0,
+                        profitLossPercentage: 0,
+                        activePositions: 0,
+                        closedPositions: 0
+                    })
+
+                    setBalance(balanceData?.userBalance || {
+                        totalBalance: 0,
+                        availableBalance: 0,
+                        totalInvested: 0,
+                        totalProfit: 0,
+                        totalLoss: 0
+                    })
+
+                    setPositions(positionsData?.positions || [])
+                    setTransactions(transactionsData?.transactions?.transactions || [])
+
+                    // Fetch initial chart data
+                    await fetchChartData('1D')
+                } else {
+                    throw new Error('No user data returned')
+                }
+            } catch (error: any) {
+                console.error('❌ Authentication or data fetch failed:', error)
+                setIsAuthenticated(false)
+                setAuthError(error.message || 'Authentication failed')
             } finally {
                 setIsLoading(false)
             }
         }
 
-        fetchData()
-    }, [token])
+        initializeData()
+    }, [])
 
-    // Performance buttons (removed Stocks, keeping only crypto/forex)
+    // Update chart when timeframe changes
+    useEffect(() => {
+        if (isAuthenticated && !isLoading) {
+            fetchChartData(chartType)
+        }
+    }, [chartType])
+
+    // Performance buttons
     const performanceFilters = ["Assets", "Forex", "Crypto"]
     const chartButtons = ["All", "1D", "1W", "1M", "3M", "1Y", "5Y", "Max"]
 
-    // Allocation data (calculate from positions)
+    // Allocation data
     const allocations = calculateAllocations(positions, balance)
 
-    // Risk & Insurance data (calculated from portfolio)
+    // Risk & Insurance data
     const riskData = {
-        avgDailyValue: portfolio && portfolio.profitLossPercentage ? `${Math.abs(portfolio.profitLossPercentage / 30).toFixed(2)}% daily volatility` : "N/A",
+        avgDailyValue: liveStats && liveStats.pnlPercent ? `${Math.abs(liveStats.pnlPercent / 30).toFixed(2)}% daily volatility` : "N/A",
         lossInsurance: balance ? `$${(balance.totalBalance * 0.1).toFixed(2)} reserve` : "$0",
         available: "Insurance coverage coming soon",
-        dividendYield: balance && balance.totalProfit ? `${((balance.totalProfit / balance.totalBalance) * 100).toFixed(2)}% return` : "0%",
+        dividendYield: liveStats && liveStats.totalValue > 0 ? `${((liveStats.totalPnL / liveStats.totalValue) * 100).toFixed(2)}% return` : "0%",
         coverage: "Automated risk management active"
     }
 
-    // Recent activity (from transactions)
+    // Recent activity
     const recentActivity = transactions.slice(0, 6).map(tx => {
         const date = new Date(tx.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
         let action = `${tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}: $${tx.amount.toFixed(2)}`
@@ -158,19 +346,29 @@ export default function PortfolioDashboard() {
         }
     })
 
-    // Positions table data (formatted from backend)
-    const formattedPositions = positions.map(pos => ({
-        symbol: pos.symbol,
-        name: pos.symbol,
-        qty: pos.quantity.toString(),
-        price: `$${pos.currentPrice?.toFixed(2) || pos.averagePrice.toFixed(2)}`,
-        value: `$${pos.marketValue?.toFixed(2) || '0.00'}`,
-        pl: pos.unrealizedPnL ? `$${pos.unrealizedPnL.toFixed(2)}` : '$0.00',
-        roi: pos.unrealizedPnLPercent ? `${pos.unrealizedPnLPercent >= 0 ? '+' : ''}${pos.unrealizedPnLPercent.toFixed(2)}%` : '0%',
-        action: pos.unrealizedPnLPercent ? `${pos.unrealizedPnLPercent >= 0 ? '+' : ''}${pos.unrealizedPnLPercent.toFixed(1)}%` : '0%'
-    }))
+    // Positions table data with LIVE prices
+    const formattedPositions = positions.map(pos => {
+        const livePrice = livePrices.get(pos.symbol)
+        const currentPrice = livePrice?.price || pos.currentPrice || pos.averagePrice
+        const marketValue = currentPrice * pos.quantity
+        const unrealizedPnL = marketValue - (pos.averagePrice * pos.quantity)
+        const unrealizedPnLPercent = pos.averagePrice > 0 ? (unrealizedPnL / (pos.averagePrice * pos.quantity)) * 100 : 0
+        const priceChange = livePrice?.change || 0
 
-    // Add cash position
+        return {
+            symbol: pos.symbol,
+            name: pos.symbol,
+            qty: pos.quantity.toString(),
+            price: `$${currentPrice.toFixed(2)}`,
+            value: `$${marketValue.toFixed(2)}`,
+            pl: `$${unrealizedPnL.toFixed(2)}`,
+            roi: `${unrealizedPnLPercent >= 0 ? '+' : ''}${unrealizedPnLPercent.toFixed(2)}%`,
+            action: `${priceChange >= 0 ? '+' : ''}${priceChange.toFixed(1)}%`,
+            isLive: !!livePrice,
+            assetType: pos.assetType
+        }
+    })
+
     if (balance && balance.availableBalance > 0) {
         formattedPositions.push({
             symbol: "Cash",
@@ -180,14 +378,17 @@ export default function PortfolioDashboard() {
             value: "-",
             pl: "-",
             roi: `$${balance.availableBalance.toFixed(2)}`,
-            action: "0%"
+            action: "0%",
+            isLive: false,
+            assetType: 'cash'
         })
     }
 
-    // Chart configuration
+    // Dynamic chart configuration
     const chartOptions: ChartProps["options"] = {
         chart: {
-            id: "btc-chart",
+            id: "portfolio-chart",
+            type: 'area',
             toolbar: {
                 show: true,
                 tools: {
@@ -200,19 +401,48 @@ export default function PortfolioDashboard() {
                 }
             },
             background: '#1a1a1a',
-            foreColor: '#9ca3af'
+            foreColor: '#9ca3af',
+            animations: {
+                enabled: true,
+                speed: 800,
+                animateGradually: {
+                    enabled: true,
+                    delay: 150
+                },
+                dynamicAnimation: {
+                    enabled: true,
+                    speed: 350
+                }
+            }
+        },
+        dataLabels: {
+            enabled: false
+        },
+        stroke: {
+            curve: 'smooth',
+            width: 2
+        },
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shadeIntensity: 1,
+                opacityFrom: 0.7,
+                opacityTo: 0.2,
+                stops: [0, 90, 100]
+            }
         },
         xaxis: {
             type: 'datetime',
             labels: {
-                style: { colors: "#6b7280", fontSize: '10px' }
+                style: { colors: "#6b7280", fontSize: '10px' },
+                datetimeUTC: false
             },
             axisBorder: { color: '#374151' }
         },
         yaxis: {
             labels: {
                 style: { colors: "#6b7280", fontSize: '10px' },
-                formatter: (val: number) => `$${val.toLocaleString()}`
+                formatter: (val: number) => `$${val.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
             },
             opposite: true
         },
@@ -220,62 +450,38 @@ export default function PortfolioDashboard() {
             borderColor: "#374151",
             strokeDashArray: 2
         },
-        stroke: {
-            curve: 'smooth',
-            width: 2
-        },
-        colors: ['#ef4444'],
+        colors: ['#10b981'],
         tooltip: {
             theme: "dark",
-            x: { format: 'dd MMM HH:mm' }
+            x: {
+                format: chartType === '1D' ? 'HH:mm' : chartType === '1W' ? 'dd MMM HH:mm' : 'dd MMM yyyy'
+            },
+            y: {
+                formatter: (val: number) => `$${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            }
         },
-        annotations: {
-            yaxis: [
-                {
-                    y: 67000,
-                    borderColor: '#10b981',
-                    label: {
-                        borderColor: '#10b981',
-                        style: { color: '#fff', background: '#10b981' },
-                        text: 'BTC'
-                    }
-                },
-                {
-                    y: 45000,
-                    borderColor: '#f59e0b',
-                    label: {
-                        borderColor: '#f59e0b',
-                        style: { color: '#fff', background: '#f59e0b' },
-                        text: 'ETH'
-                    }
-                }
-            ]
+        noData: {
+            text: 'Loading chart data...',
+            align: 'center',
+            verticalAlign: 'middle',
+            style: {
+                color: '#9ca3af',
+                fontSize: '14px'
+            }
         }
     }
 
     const chartSeries = [{
-        name: 'BTC/USD',
-        data: [
-            [new Date('2023-10-01').getTime(), 67000],
-            [new Date('2023-10-05').getTime(), 65000],
-            [new Date('2023-10-10').getTime(), 58000],
-            [new Date('2023-10-15').getTime(), 62000],
-            [new Date('2023-10-20').getTime(), 55000],
-            [new Date('2023-10-25').getTime(), 48000],
-            [new Date('2023-11-01').getTime(), 52000],
-            [new Date('2023-11-05').getTime(), 58000],
-            [new Date('2023-11-10').getTime(), 54000],
-            [new Date('2023-11-15').getTime(), 61000],
-            [new Date('2023-11-20').getTime(), 58000],
-            [new Date('2023-11-25').getTime(), 67000],
-        ]
+        name: 'Portfolio Value',
+        data: chartData
     }]
 
     // Handle deposit
     const handleDeposit = async () => {
-        if (!token || !depositAmount) return
+        if (!isAuthenticated || !depositAmount) return
 
         try {
+            console.log('💰 Processing deposit...')
             await api.transactions.createDeposit({
                 amount: parseFloat(depositAmount),
                 currency: "USD",
@@ -283,24 +489,67 @@ export default function PortfolioDashboard() {
                 bankDetails: {}
             })
 
+            console.log('✅ Deposit request submitted')
             alert("Deposit request submitted successfully!")
             setIsDepositModalOpen(false)
             setDepositAmount("")
 
-            // Refresh data
             const balanceData = await api.user.getBalance()
             setBalance(balanceData?.userBalance)
+
+            const transactionsData = await api.transactions.getAll({ page: 1, limit: 10 })
+            setTransactions(transactionsData?.transactions?.transactions || [])
         } catch (error: any) {
+            console.error('❌ Deposit failed:', error)
             alert(`Deposit failed: ${error.message}`)
         }
     }
 
+    // Loading state
     if (isLoading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 text-white flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
                     <p className="text-slate-400">Loading portfolio data...</p>
+                    <p className="text-xs text-slate-500 mt-2">Authenticating and fetching your data</p>
+                </div>
+            </div>
+        )
+    }
+
+    // Not authenticated state
+    if (!isAuthenticated) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 text-white flex items-center justify-center">
+                <div className="text-center max-w-md mx-auto p-6">
+                    <div className="mb-6">
+                        <svg className="w-16 h-16 mx-auto text-red-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <h2 className="text-2xl font-bold mb-2">Authentication Required</h2>
+                        <p className="text-slate-400 mb-2">Please log in to view your portfolio</p>
+                        {authError && (
+                            <p className="text-sm text-red-400 bg-red-400/10 px-4 py-2 rounded-lg mt-4">
+                                Error: {authError}
+                            </p>
+                        )}
+                    </div>
+                    <div className="flex gap-3 justify-center">
+                        <Button
+                            className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                            onClick={() => window.location.href = '/login'}
+                        >
+                            Go to Login
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="border-slate-600 text-slate-300 hover:bg-slate-800"
+                            onClick={() => window.location.href = '/register'}
+                        >
+                            Register
+                        </Button>
+                    </div>
                 </div>
             </div>
         )
@@ -313,100 +562,65 @@ export default function PortfolioDashboard() {
                 <div className="mb-6 flex justify-between items-end">
                     <div>
                         <h1 className="text-2xl font-bold mb-1 text-white">Portfolio</h1>
-                        <p className="text-sm text-slate-400">Overview of Bitcoin, across Stocks, Forex, and Crypto</p>
+                        <p className="text-sm text-slate-400">
+                            Live tracking of your positions
+                            {(cryptoConnected || forexConnected) && (
+                                <span className="ml-2 inline-flex items-center">
+                                    <span className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse mr-1"></span>
+                                    <span className="text-emerald-400 text-xs">Live</span>
+                                </span>
+                            )}
+                        </p>
                     </div>
-                    <Button className="bg-emerald-500 hover:bg-emerald-600 text-white" onClick={() => setIsDepositModalOpen(true)}>
+                    <Button className="bg-emerald-500 hover:bg-emerald-600 text-white" onClick={() => window.location.href = '/dashboard/wallet'}>
                         Deposit Funds
                     </Button>
                 </div>
 
-                {/* Portfolio Summary Cards */}
+                {/* Portfolio Summary Cards - NOW WITH LIVE DATA */}
                 <div className="grid grid-cols-4 gap-4 mb-6">
                     <SummaryCard label="Total Value" value={portfolioStats.totalValue} />
                     <SummaryCard label="Cash (USD)" value={portfolioStats.cashUSD} />
-                    <SummaryCard label="Total P/L" value={portfolioStats.totalPL} valueColor="text-emerald-400" />
-                    <SummaryCard label="BTC Ledger" value={portfolioStats.btcLedger} valueColor="text-emerald-400" />
+                    <SummaryCard
+                        label="Total P/L"
+                        value={portfolioStats.totalPL}
+                        valueColor={liveStats && liveStats.totalPnL >= 0 ? "text-emerald-400" : "text-red-400"}
+                    />
+                    <SummaryCard label="Total Invested" value={portfolioStats.btcLedger} valueColor="text-emerald-400" />
                 </div>
 
                 {/* Main Content Grid */}
                 <div className="grid grid-cols-12 gap-6">
                     {/* Left Column - Chart */}
                     <div className="col-span-8">
-                        {/* Performance Section */}
-                        <div className="bg-transparent rounded-lg border border-white/5 p-5 mb-6">
+                     
+
+                        {/* Positions Table with LIVE PRICES */}
+                        <div className="bg-transparent rounded-lg border border-white/5 p-5">
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-lg font-bold text-white">Performance</h2>
-                                <div className="flex items-center gap-2">
-                                    {performanceFilters.map((filter) => (
-                                        <button
-                                            key={filter}
-                                            className={`px-3 py-1.5 rounded text-xs font-medium transition ${filter === "All Assets"
-                                                ? 'bg-emerald-500 text-white hover:bg-emerald-500/90'
-                                                : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
-                                                }`}
-                                        >
-                                            {filter}
-                                        </button>
-                                    ))}
-                                    <button className="px-3 py-1.5 rounded text-xs font-medium bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white">
-                                        Crypto
-                                    </button>
+                                <h2 className="text-lg font-bold text-white">Your Positions</h2>
+                                <div className="flex items-center gap-2 text-xs text-slate-400">
+                                    {cryptoConnected && (
+                                        <span className="flex items-center">
+                                            <span className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse mr-1"></span>
+                                            Crypto Live
+                                        </span>
+                                    )}
+                                    {forexConnected && (
+                                        <span className="flex items-center ml-2">
+                                            <span className="h-2 w-2 bg-blue-500 rounded-full animate-pulse mr-1"></span>
+                                            Forex Live
+                                        </span>
+                                    )}
                                 </div>
                             </div>
-
-                            <div className="text-xs text-slate-400 mb-4">BTC converts to USD (2024)</div>
-
-                            {/* Chart */}
-                            <div className="bg-black/40 rounded-lg p-4 border border-white/5">
-                                <Chart
-                                    options={chartOptions}
-                                    series={chartSeries}
-                                    type="area"
-                                    height={300}
-                                />
-                            </div>
-
-                            {/* Chart Time Filters */}
-                            <div className="flex items-center justify-between mt-4">
-                                <div className="flex items-center gap-2">
-                                    {chartButtons.map((btn) => (
-                                        <button
-                                            key={btn}
-                                            onClick={() => setChartType(btn)}
-                                            className={`px-3 py-1 rounded text-xs font-medium transition ${chartType === btn
-                                                ? 'bg-emerald-500 text-white hover:bg-emerald-500/90'
-                                                : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
-                                                }`}
-                                        >
-                                            {btn}
-                                        </button>
-                                    ))}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="flex items-center gap-1 text-xs">
-                                        <span className="w-3 h-3 rounded-full bg-yellow-500"></span>
-                                        <span className="text-slate-400">USD</span>
-                                    </span>
-                                    <span className="flex items-center gap-1 text-xs">
-                                        <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
-                                        <span className="text-slate-400">BTC</span>
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="text-xs text-slate-500 mt-2">
-                                Source: CBOE, CME AG, Binance, Coinbit, TSXUSDF, CBOE, Crypto.co
-                            </div>
+                            <PositionsTable positions={formattedPositions} />
                         </div>
-
-                        {/* Positions Table */}
-                        <PositionsTable positions={formattedPositions} />
                     </div>
 
                     {/* Right Column - Allocation & Risk */}
                     <div className="col-span-4">
                         {/* Allocation Section */}
-                        <AllocationCard allocations={allocations} />
 
                         {/* Risk & Insurance Section */}
                         <div className="bg-transparent rounded-lg border border-white/5 p-5 mb-6">
@@ -425,7 +639,7 @@ export default function PortfolioDashboard() {
                                 </div>
 
                                 <div>
-                                    <div className="text-xs text-slate-400 mb-1">Dividend yield</div>
+                                    <div className="text-xs text-slate-400 mb-1">Portfolio Return</div>
                                     <div className="text-sm font-semibold text-white">{riskData.dividendYield}</div>
                                     <div className="text-xs text-slate-500">{riskData.coverage}</div>
                                 </div>
@@ -442,25 +656,31 @@ export default function PortfolioDashboard() {
                             </div>
 
                             <div className="space-y-3">
-                                {recentActivity.map((activity, idx) => (
-                                    <div key={idx} className="flex items-start justify-between pb-3 border-b border-white/5 last:border-0">
-                                        <div className="flex-1">
-                                            <div className="text-xs text-slate-400 mb-1">{activity.date}</div>
-                                            <div className="text-sm text-slate-300">{activity.action}</div>
-                                            {activity.status && (
-                                                <span className="inline-block mt-1 px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-xs rounded">
-                                                    {activity.status}
-                                                </span>
+                                {recentActivity.length > 0 ? (
+                                    recentActivity.map((activity, idx) => (
+                                        <div key={idx} className="flex items-start justify-between pb-3 border-b border-white/5 last:border-0">
+                                            <div className="flex-1">
+                                                <div className="text-xs text-slate-400 mb-1">{activity.date}</div>
+                                                <div className="text-sm text-slate-300">{activity.action}</div>
+                                                {activity.status && (
+                                                    <span className="inline-block mt-1 px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-xs rounded">
+                                                        {activity.status}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {activity.value && (
+                                                <div className={`text-sm font-semibold ${activity.value.includes('+') ? 'text-emerald-400' : 'text-red-400'
+                                                    }`}>
+                                                    {activity.value}
+                                                </div>
                                             )}
                                         </div>
-                                        {activity.value && (
-                                            <div className={`text-sm font-semibold ${activity.value.includes('+') ? 'text-emerald-400' : 'text-red-400'
-                                                }`}>
-                                                {activity.value}
-                                            </div>
-                                        )}
+                                    ))
+                                ) : (
+                                    <div className="text-center py-8">
+                                        <p className="text-slate-500 text-sm">No recent activity</p>
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </div>
                     </div>

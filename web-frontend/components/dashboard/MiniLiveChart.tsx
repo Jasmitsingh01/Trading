@@ -14,12 +14,12 @@ interface MiniLiveChartProps {
   height?: number
 }
 
-export default function MiniLiveChart({ 
-  priceHistory, 
-  currentPrice, 
-  change, 
+export default function MiniLiveChart({
+  priceHistory,
+  currentPrice,
+  change,
   symbol,
-  height = 100 
+  height = 100
 }: MiniLiveChartProps) {
   const isPositive = parseFloat(change) >= 0
 
@@ -35,7 +35,7 @@ export default function MiniLiveChart({
         dynamicAnimation: {
           speed: 500
         }
-      }
+      } as any
     },
     stroke: {
       curve: "smooth",

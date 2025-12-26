@@ -127,7 +127,7 @@ export default function LiveTradingChart({ symbol, assetType, height = 400 }: Li
         dynamicAnimation: {
           speed: 500
         }
-      },
+      } as any,
       toolbar: {
         show: true,
         tools: {

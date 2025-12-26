@@ -117,8 +117,7 @@ export async function registerMarketRoutes(app: FastifyInstance) {
                 console.error('Binance search error:', error);
             }
 
-            // Add Finnhub stock search if you have API key
-            // ... your stock search implementation
+           
 
             return reply.send(results);
         } catch (error: any) {

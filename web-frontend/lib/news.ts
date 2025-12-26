@@ -3,7 +3,7 @@
  * Fetches financial news from backend API
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE = process.env.NEXT_PUBLIC_BACKEND_API_URL;
 
 export interface NewsArticle {
     source: { id?: string; name: string };
@@ -32,7 +32,7 @@ export interface NewsPaginationResponse {
 export async function fetchAllNews(): Promise<NewsArticle[]> {
     try {
         const response = await fetch(`${API_BASE}/news`);
-        
+
         if (!response.ok) {
             throw new Error(`News API error: ${response.status}`);
         }
@@ -64,7 +64,7 @@ export async function fetchNewsPaginated(
         }
 
         const response = await fetch(`${API_BASE}/news?${params}`);
-        
+
         if (!response.ok) {
             throw new Error(`News API error: ${response.status}`);
         }
@@ -82,7 +82,7 @@ export async function fetchNewsPaginated(
 export async function fetchCryptoNews(): Promise<NewsArticle[]> {
     try {
         const response = await fetch(`${API_BASE}/news/crypto`);
-        
+
         if (!response.ok) {
             throw new Error(`News API error: ${response.status}`);
         }
@@ -101,7 +101,7 @@ export async function fetchCryptoNews(): Promise<NewsArticle[]> {
 export async function fetchForexNews(): Promise<NewsArticle[]> {
     try {
         const response = await fetch(`${API_BASE}/news/forex`);
-        
+
         if (!response.ok) {
             throw new Error(`News API error: ${response.status}`);
         }
@@ -120,7 +120,7 @@ export async function fetchForexNews(): Promise<NewsArticle[]> {
 export async function fetchStockNews(): Promise<NewsArticle[]> {
     try {
         const response = await fetch(`${API_BASE}/news/stocks`);
-        
+
         if (!response.ok) {
             throw new Error(`News API error: ${response.status}`);
         }
@@ -138,7 +138,7 @@ export async function fetchStockNews(): Promise<NewsArticle[]> {
  */
 export function searchNews(articles: NewsArticle[], query: string): NewsArticle[] {
     const searchTerm = query.toLowerCase();
-    return articles.filter(article => 
+    return articles.filter(article =>
         article.title.toLowerCase().includes(searchTerm) ||
         article.description?.toLowerCase().includes(searchTerm) ||
         article.content?.toLowerCase().includes(searchTerm)
@@ -184,11 +184,11 @@ export function formatNewsDate(dateString: string): string {
     if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
     if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
     if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    
-    return date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric' 
+
+    return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
     });
 }
 

@@ -5,8 +5,14 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:mobile": "next build && npx cap sync",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint",
+    "cap:sync": "npx cap sync",
+    "cap:open:ios": "npx cap open ios",
+    "cap:open:android": "npx cap open android",
+    "mobile:dev": "npm run build && npx cap sync && npx cap run android",
+    "mobile:dev:ios": "npm run build && npx cap sync && npx cap run ios"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",

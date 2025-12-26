@@ -1,7 +1,6 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  output: 'export',
   reactStrictMode: true,
   images: {
     unoptimized: true,
@@ -10,7 +9,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  compress: true,
 }
 
 export default nextConfig

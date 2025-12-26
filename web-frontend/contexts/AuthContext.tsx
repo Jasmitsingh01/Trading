@@ -96,48 +96,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // User Management
   // ============================
 
-  const fetchUser = async (): Promise<void> => {
-    try {
-      setError(null)
-      const token = getStorageItem(STORAGE_KEYS.AUTH_TOKEN)
-
-      if (!token) {
-        console.log('⚠️ No auth token found')
-        setUser(null)
-        setLoading(false)
-        return
-      }
-
-      // Try to get user from API
-      const response = await api.auth.getMe()
-
-      if (response?.me) {
-        setUser(response.me)
-
-        // Update stored user data
-        setStorageItem(STORAGE_KEYS.USER, JSON.stringify(response.me))
-
-        console.log('✅ User loaded:', response.me.email)
-      } else {
-        // Token might be invalid
-        console.warn('⚠️ Token invalid, clearing auth')
-        await handleInvalidAuth()
-      }
-    } catch (err: any) {
-      console.error('❌ Failed to fetch user:', err.message)
-      setError(err.message)
-
-      // If token is expired or invalid, clear auth
-      if (err.message?.includes('token') || err.message?.includes('401')) {
-        await handleInvalidAuth()
-      } else {
-        setUser(null)
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const handleInvalidAuth = async (): Promise<void> => {
     setUser(null)
     clearAllStorage()
@@ -159,50 +117,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Authentication Actions
   // ============================
 
-  const login = async (email: string, password: string): Promise<void> => {
+const fetchUser = async (): Promise<void> => {
     try {
-      setLoading(true)
-      setError(null)
+        setError(null)
+        
+        // Don't check localStorage - cookies are sent automatically
+        const response = await api.auth.getMe()
 
-      console.log('🔐 Attempting login for:', email)
-
-      const response = await api.auth.login(email, password)
-
-      if (response.success && response.data?.user) {
-        const { user: userData, token, refreshToken, expiresAt } = response.data
-
-        // Store authentication data
-        if (token) {
-          setStorageItem(STORAGE_KEYS.AUTH_TOKEN, token)
+        if (response?.me) {
+            setUser(response.me)
+            console.log('✅ User loaded:', response.me.email)
+        } else {
+            setUser(null)
         }
-        if (refreshToken) {
-          setStorageItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken)
-        }
-        if (expiresAt) {
-          setStorageItem(STORAGE_KEYS.EXPIRES_AT, expiresAt.toString())
-        }
-
-        // Store user data
-        setStorageItem(STORAGE_KEYS.USER, JSON.stringify(userData))
-
-        setUser(userData)
-
-        console.log('✅ Login successful:', userData.email)
-
-        // Redirect to dashboard
-        router.push('/dashboard')
-      } else {
-        throw new Error(response.message || 'Login failed')
-      }
     } catch (err: any) {
-      const errorMessage = err.message || 'Login failed. Please try again.'
-      setError(errorMessage)
-      console.error('❌ Login error:', errorMessage)
-      throw new Error(errorMessage)
+        console.error('❌ Failed to fetch user:', err.message)
+        setError(err.message)
+        setUser(null)
     } finally {
-      setLoading(false)
+        setLoading(false)
     }
-  }
+}
+
+const login = async (email: string, password: string): Promise<void> => {
+    try {
+        setLoading(true)
+        setError(null)
+
+        console.log('🔐 Attempting login for:', email)
+
+        const response = await api.auth.login(email, password)
+
+        if (response.success) {
+            // Cookie is set by backend - fetch user
+            await fetchUser()
+            console.log('✅ Login successful')
+            // Don't redirect here - let the page handle it
+        } else {
+            throw new Error(response.message || 'Login failed')
+        }
+    } catch (err: any) {
+        const errorMessage = err.message || 'Login failed. Please try again.'
+        setError(errorMessage)
+        console.error('❌ Login error:', errorMessage)
+        throw new Error(errorMessage)
+    } finally {
+        setLoading(false)
+    }
+}
+
 
   const logout = async (): Promise<void> => {
     try {

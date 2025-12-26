@@ -7,7 +7,7 @@ const config: CapacitorConfig = {
   server: {
     // Use your machine's hostname or IP for development
     // Comment this out for production builds
-    url: 'http://192.168.1.48:3000',
+    url: 'http://192.168.1.48:3000/dashboard',
     cleartext: true,
   },
   plugins: {

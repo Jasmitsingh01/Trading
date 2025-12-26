@@ -47,5 +47,12 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+<string>We need camera access for KYC verification and profile pictures</string>
+<key>NSPhotoLibraryUsageDescription</key>
+<string>We need photo library access to upload documents and profile pictures</string>
+<key>NSPhotoLibraryAddUsageDescription</key>
+<string>We need permission to save photos to your library</string>
+
 </dict>
 </plist>

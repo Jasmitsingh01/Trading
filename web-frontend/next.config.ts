@@ -1,11 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'export',
+  // Remove or comment out output: 'export'
+  // output: 'export', 
   images: {
     unoptimized: true,
   },
   trailingSlash: true,
+  typescript: {
+    ignoreBuildErrors: false,
+  },
 }
 
 module.exports = nextConfig

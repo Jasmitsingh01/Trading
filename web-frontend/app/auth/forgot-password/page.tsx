@@ -11,9 +11,12 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/api'
 
+import {useRequireGuest} from '@/contexts/AuthContext'
+
 type Step = 'email' | 'otp' | 'password' | 'success'
 
 export default function ForgotPasswordPage() {
+  useRequireGuest()
   const [email, setEmail] = useState('')
   const [otp, setOtp] = useState('')
   const [newPassword, setNewPassword] = useState('')

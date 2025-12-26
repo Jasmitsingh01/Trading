@@ -206,3 +206,72 @@ html {
 .animate-on-scroll {
   opacity: 0;
 }
+
+
+/* frontend/src/app/globals.css */
+
+/* Existing styles... */
+
+/* Mobile app specific styles */
+.mobile-platform {
+  /* Disable text selection on mobile */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.mobile-app {
+  /* Prevent overscroll bounce */
+  overscroll-behavior-y: contain;
+
+  /* Safe area support for notched devices */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.platform-ios {
+  /* iOS specific styles */
+}
+
+.platform-android {
+  /* Android specific styles */
+}
+
+/* Keyboard handling */
+body.keyboard-open {
+  /* Adjust layout when keyboard is visible */
+}
+
+/* Make specific elements scrollable */
+.scrollable {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Safe area variables */
+:root {
+  --safe-area-inset-top: env(safe-area-inset-top);
+  --safe-area-inset-right: env(safe-area-inset-right);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+  --safe-area-inset-left: env(safe-area-inset-left);
+}
+
+/* Mobile app buttons with haptic feedback */
+.mobile-app button {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent zoom on input focus (iOS) */
+.mobile-app input,
+.mobile-app select,
+.mobile-app textarea {
+  font-size: 16px !important;
+}
+
+/* Touch-friendly sizing */
+.mobile-app .touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}

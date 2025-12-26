@@ -8,10 +8,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/api'
+import { useRequireGuest } from '@/contexts/AuthContext'
 
 type Step = 'personal' | 'verify' | 'address' | 'documents' | 'avatar'
 
 export default function OpenAccountPage() {
+    useRequireGuest()
     // Personal Info
     const [fullname, setFullname] = useState('')
     const [email, setEmail] = useState('')

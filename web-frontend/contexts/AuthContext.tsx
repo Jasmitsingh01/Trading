@@ -1,10 +1,13 @@
-// frontend/contexts/AuthContext.tsx
-
+// frontend/src/contexts/AuthContext.tsx
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
+import { isNativePlatform } from '@/lib/capacitor'
+import { Preferences } from '@capacitor/preferences'
+import { App } from '@capacitor/app'
+import { Haptics, ImpactStyle } from '@capacitor/haptics'
 
 interface User {
   id: string
@@ -26,34 +29,272 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
+  isAuthenticated: boolean
+  isMobile: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+// Storage keys
+const STORAGE_KEYS = {
+  AUTH_TOKEN: 'authToken',
+  REFRESH_TOKEN: 'refreshToken',
+  USER: 'user',
+  EXPIRES_AT: 'expiresAt',
+} as const
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isMobile] = useState(isNativePlatform())
   const router = useRouter()
 
-  const fetchUser = async () => {
+  // ============================
+  // Storage Helpers (Web + Mobile)
+  // ============================
+
+  const getStorageItem = async (key: string): Promise<string | null> => {
+    try {
+      if (isMobile) {
+        const { value } = await Preferences.get({ key })
+        return value
+      }
+      return localStorage.getItem(key)
+    } catch (error) {
+      console.error(`Error getting ${key}:`, error)
+      return null
+    }
+  }
+
+  const setStorageItem = async (key: string, value: string): Promise<void> => {
+    try {
+      if (isMobile) {
+        await Preferences.set({ key, value })
+      } else {
+        localStorage.setItem(key, value)
+      }
+    } catch (error) {
+      console.error(`Error setting ${key}:`, error)
+    }
+  }
+
+  const removeStorageItem = async (key: string): Promise<void> => {
+    try {
+      if (isMobile) {
+        await Preferences.remove({ key })
+      } else {
+        localStorage.removeItem(key)
+      }
+    } catch (error) {
+      console.error(`Error removing ${key}:`, error)
+    }
+  }
+
+  const clearAllStorage = async (): Promise<void> => {
+    try {
+      if (isMobile) {
+        await Preferences.clear()
+      } else {
+        localStorage.clear()
+        sessionStorage.clear()
+      }
+      console.log('✅ Storage cleared')
+    } catch (error) {
+      console.error('Error clearing storage:', error)
+    }
+  }
+
+  // ============================
+  // Haptic Feedback Helper
+  // ============================
+
+  const triggerHaptic = async (style: 'light' | 'medium' | 'heavy' = 'medium') => {
+    if (!isMobile) return
+
+    try {
+      const impactStyle = {
+        light: ImpactStyle.Light,
+        medium: ImpactStyle.Medium,
+        heavy: ImpactStyle.Heavy,
+      }[style]
+
+      await Haptics.impact({ style: impactStyle })
+    } catch (error) {
+      // Haptics not available, ignore
+    }
+  }
+
+  // ============================
+  // User Management
+  // ============================
+
+  const fetchUser = async (): Promise<void> => {
     try {
       setError(null)
+      const token = await getStorageItem(STORAGE_KEYS.AUTH_TOKEN)
+
+      if (!token) {
+        console.log('⚠️ No auth token found')
+        setUser(null)
+        setLoading(false)
+        return
+      }
+
+      // Try to get user from API
       const response = await api.auth.getMe()
-      
+
       if (response?.me) {
         setUser(response.me)
+
+        // Update stored user data
+        await setStorageItem(STORAGE_KEYS.USER, JSON.stringify(response.me))
+
+        console.log('✅ User loaded:', response.me.email)
       } else {
-        setUser(null)
+        // Token might be invalid
+        console.warn('⚠️ Token invalid, clearing auth')
+        await handleInvalidAuth()
       }
     } catch (err: any) {
       console.error('❌ Failed to fetch user:', err.message)
       setError(err.message)
-      setUser(null)
-      
-      // If we're on a protected route, redirect to login
+
+      // If token is expired or invalid, clear auth
+      if (err.message.includes('token') || err.message.includes('401')) {
+        await handleInvalidAuth()
+      } else {
+        setUser(null)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleInvalidAuth = async (): Promise<void> => {
+    setUser(null)
+    await clearAllStorage()
+
+    // Only redirect if on protected route
+    if (typeof window !== 'undefined') {
       const currentPath = window.location.pathname
-      if (currentPath.startsWith('/dashboard')) {
+      if (
+        currentPath.startsWith('/dashboard') ||
+        currentPath.startsWith('/trading') ||
+        currentPath.startsWith('/portfolio')
+      ) {
+        if (isMobile) {
+          window.location.href = '/auth/login'
+        } else {
+          router.push('/auth/login')
+        }
+      }
+    }
+  }
+
+  // ============================
+  // Authentication Actions
+  // ============================
+
+  const login = async (email: string, password: string): Promise<void> => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      console.log('🔐 Attempting login for:', email)
+
+      const response = await api.auth.login(email, password)
+
+      if (response.success && response.data?.user) {
+        const { user: userData, token, refreshToken, expiresAt } = response.data
+
+        // Store authentication data
+        if (token) {
+          await setStorageItem(STORAGE_KEYS.AUTH_TOKEN, token)
+        }
+        if (refreshToken) {
+          await setStorageItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken)
+        }
+        if (expiresAt) {
+          await setStorageItem(STORAGE_KEYS.EXPIRES_AT, expiresAt.toString())
+        }
+
+        // Store user data
+        await setStorageItem(STORAGE_KEYS.USER, JSON.stringify(userData))
+
+        setUser(userData)
+
+        // Haptic feedback on successful login (mobile only)
+        await triggerHaptic('medium')
+
+        console.log('✅ Login successful:', userData.email)
+
+        // Redirect to dashboard
+        if (isMobile) {
+          window.location.href = '/dashboard'
+        } else {
+          router.push('/dashboard')
+        }
+      } else {
+        throw new Error(response.message || 'Login failed')
+      }
+    } catch (err: any) {
+      const errorMessage = err.message || 'Login failed. Please try again.'
+      setError(errorMessage)
+
+      // Haptic feedback on error (mobile only)
+      await triggerHaptic('heavy')
+
+      console.error('❌ Login error:', errorMessage)
+      throw new Error(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const logout = async (): Promise<void> => {
+    try {
+      console.log('🚪 Logging out...')
+      setLoading(true)
+
+      // Call backend logout to invalidate session
+      try {
+        await api.auth.logout()
+        console.log('✅ Backend logout successful')
+      } catch (err) {
+        console.warn('⚠️ Backend logout failed, continuing...', err)
+      }
+
+      // Clear user state
+      setUser(null)
+      setError(null)
+
+      // Clear all storage (mobile + web)
+      await clearAllStorage()
+
+      // Haptic feedback (mobile only)
+      await triggerHaptic('light')
+
+      console.log('✅ Logout complete')
+
+      // Redirect to login
+      if (isMobile) {
+        // Hard redirect on mobile
+        window.location.href = '/auth/login'
+      } else {
+        // Use Next.js router on web
+        router.push('/auth/login')
+      }
+    } catch (err) {
+      console.error('❌ Logout error:', err)
+
+      // Force logout even on error
+      setUser(null)
+      await clearAllStorage()
+
+      if (isMobile) {
+        window.location.href = '/auth/login'
+      } else {
         router.push('/auth/login')
       }
     } finally {
@@ -61,99 +302,138 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  useEffect(() => {
-    fetchUser()
-  }, [])
-
-  const login = async (email: string, password: string) => {
-    try {
-      setLoading(true)
-      setError(null)
-      
-      const response = await api.auth.login(email, password)
-      
-      if (response.success && response.data?.user) {
-        setUser(response.data.user)
-        
-        // Store user info in localStorage for persistence
-        localStorage.setItem('user', JSON.stringify(response.data.user))
-        
-        router.push('/dashboard')
-      } else {
-        throw new Error('Login failed')
-      }
-    } catch (err: any) {
-      const errorMessage = err.message || 'Login failed'
-      setError(errorMessage)
-      throw new Error(errorMessage)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const logout = async () => {
-    try {
-      console.log('🚪 Logging out...')
-      
-      // Call logout API (this clears cookies on backend)
-      try {
-        await api.auth.logout()
-        console.log('✅ Backend logout successful')
-      } catch (err) {
-        console.warn('⚠️ Backend logout failed, but continuing...', err)
-        // Continue with logout even if API fails
-      }
-      
-      // Clear user state
-      setUser(null)
-      setError(null)
-      
-      // Clear ALL localStorage items
-      localStorage.removeItem('authToken')
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      localStorage.removeItem('auth_token')
-      localStorage.removeItem('refreshToken')
-      localStorage.removeItem('expiresAt')
-      
-      // Optional: Clear everything
-      // localStorage.clear()
-      
-      // Clear sessionStorage
-      sessionStorage.clear()
-      
-      console.log('✅ Client storage cleared')
-      
-      // Redirect to login with hard reload
-      console.log('🔄 Redirecting to login...')
-      window.location.href = '/auth/login'
-      
-    } catch (err) {
-      console.error('❌ Logout error:', err)
-      
-      // Force logout anyway
-      setUser(null)
-      localStorage.clear()
-      sessionStorage.clear()
-      window.location.href = '/auth/login'
-    }
-  }
-
-  const refreshUser = async () => {
+  const refreshUser = async (): Promise<void> => {
     await fetchUser()
   }
 
-  return (
-    <AuthContext.Provider value={{ user, loading, error, login, logout, refreshUser }}>
-      {children}
-    </AuthContext.Provider>
-  )
+  // ============================
+  // App Lifecycle Handling (Mobile)
+  // ============================
+
+  useEffect(() => {
+    if (!isMobile) return
+
+    let listenerHandle: any = null
+
+    // Handle app state changes on mobile
+    const setupListener = async () => {
+      listenerHandle = await App.addListener('appStateChange', async ({ isActive }) => {
+        if (isActive) {
+          console.log('📱 App became active, refreshing user...')
+          // Refresh user data when app comes to foreground
+          await refreshUser()
+        }
+      })
+    }
+
+    setupListener()
+
+    return () => {
+      if (listenerHandle) {
+        listenerHandle.remove()
+      }
+    }
+  }, [isMobile])
+
+  // ============================
+  // Initial Load
+  // ============================
+
+  useEffect(() => {
+    console.log('🔄 Initializing auth context...')
+    fetchUser()
+  }, [])
+
+  // ============================
+  // Token Refresh Timer
+  // ============================
+
+  useEffect(() => {
+    if (!user) return
+
+    const checkTokenExpiry = async () => {
+      const expiresAt = await getStorageItem(STORAGE_KEYS.EXPIRES_AT)
+      if (!expiresAt) return
+
+      const expiryTime = parseInt(expiresAt)
+      const currentTime = Date.now()
+      const timeUntilExpiry = expiryTime - currentTime
+
+      // Refresh token 5 minutes before expiry
+      if (timeUntilExpiry < 5 * 60 * 1000 && timeUntilExpiry > 0) {
+        console.log('🔄 Token expiring soon, refreshing...')
+        try {
+          const refreshToken = await getStorageItem(STORAGE_KEYS.REFRESH_TOKEN)
+          if (refreshToken) {
+            // Call your refresh token API here
+            // const response = await api.auth.refreshToken(refreshToken)
+            // Update tokens...
+          }
+        } catch (error) {
+          console.error('Failed to refresh token:', error)
+          await handleInvalidAuth()
+        }
+      }
+    }
+
+    // Check token expiry every minute
+    const interval = setInterval(checkTokenExpiry, 60 * 1000)
+
+    return () => clearInterval(interval)
+  }, [user])
+
+  // ============================
+  // Context Value
+  // ============================
+
+  const value: AuthContextType = {
+    user,
+    loading,
+    error,
+    login,
+    logout,
+    refreshUser,
+    isAuthenticated: !!user,
+    isMobile,
+  }
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-export function useAuth() {
+// ============================
+// Hook
+// ============================
+
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext)
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider')
   }
   return context
+}
+
+// ============================
+// Additional Utility Hooks
+// ============================
+
+export function useRequireAuth(): void {
+  const { isAuthenticated, loading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.push('/auth/login')
+    }
+  }, [isAuthenticated, loading, router])
+}
+
+export function useRequireGuest(): void {
+  const { isAuthenticated, loading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      router.push('/dashboard')
+    }
+  }, [isAuthenticated, loading, router])
 }

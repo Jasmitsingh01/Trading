@@ -2,8 +2,23 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowRight, ChevronLeft, ChevronRight, TrendingUp, Bell, Shield, BarChart3, Smartphone, Apple, Play } from 'lucide-react'
+import { ArrowRight, ChevronLeft, ChevronRight, TrendingUp, Bell, Shield, BarChart3, Apple, Play } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+
+// Platform detection utility
+function detectPlatform() {
+    if (typeof window === 'undefined') return null
+    
+    const userAgent = window.navigator.userAgent.toLowerCase()
+    const isIOS = /iphone|ipad|ipod/.test(userAgent)
+    const isAndroid = /android/.test(userAgent)
+    
+    return {
+        isIOS,
+        isAndroid,
+        isMobile: isIOS || isAndroid
+    }
+}
 
 const carouselSlides = [
     {
@@ -14,16 +29,7 @@ const carouselSlides = [
             { value: "$2.5B+", label: "Trading Volume" },
             { value: "50K+", label: "Active Traders" },
             { value: "150+", label: "Global Markets" }
-        ],
-        mockup: {
-            type: 'trading',
-            messages: [
-                { type: 'received', text: 'Your AAPL stock alert: Price reached $178.45 (+2.34%)', time: '2:30 PM' },
-                { type: 'sent', text: 'Execute buy order for 10 shares', time: '2:31 PM' },
-                { type: 'received', text: 'Order executed successfully! ✅\n10 shares @ $178.45\nTotal: $1,784.50', time: '2:31 PM' },
-                { type: 'typing', text: 'Analyzing market trends...', time: '' }
-            ]
-        }
+        ]
     },
     {
         title: "Smart Alerts & Notifications",
@@ -34,16 +40,7 @@ const carouselSlides = [
             { value: "4.8★", label: "App Rating" },
             { value: "100K+", label: "Downloads" },
             { value: "iOS & Android", label: "Platforms" }
-        ],
-        mockup: {
-            type: 'alerts',
-            messages: [
-                { type: 'received', text: '🔔 Price Alert: Bitcoin reached $43,256 (+3.42%)', time: '1:15 PM' },
-                { type: 'received', text: '📊 Technical Signal: TSLA crossed above 50-day MA', time: '1:18 PM' },
-                { type: 'sent', text: 'Show me the chart', time: '1:19 PM' },
-                { type: 'received', text: 'Opening chart analysis... 📈', time: '1:19 PM' }
-            ]
-        }
+        ]
     },
     {
         title: "Enterprise Security & Compliance",
@@ -53,16 +50,7 @@ const carouselSlides = [
             { value: "256-bit", label: "SSL Encryption" },
             { value: "SEC", label: "Registered" },
             { value: "FDIC", label: "Insured" }
-        ],
-        mockup: {
-            type: 'security',
-            messages: [
-                { type: 'received', text: '🔐 Security Alert: New login detected from Delhi, India', time: '3:45 PM' },
-                { type: 'sent', text: 'Yes, that\'s me', time: '3:45 PM' },
-                { type: 'received', text: 'Login approved ✓\n2FA: Enabled\nDevice: Trusted', time: '3:46 PM' },
-                { type: 'received', text: 'Your account is 100% secure 🛡️', time: '3:46 PM' }
-            ]
-        }
+        ]
     },
     {
         title: "AI-Powered Trading Insights",
@@ -72,16 +60,7 @@ const carouselSlides = [
             { value: "100+", label: "Indicators" },
             { value: "AI-Powered", label: "Predictions" },
             { value: "Real-Time", label: "Market Data" }
-        ],
-        mockup: {
-            type: 'ai',
-            messages: [
-                { type: 'sent', text: 'What\'s the market sentiment for NVDA?', time: '4:12 PM' },
-                { type: 'received', text: '🤖 AI Analysis:\n\nNVDA Sentiment: Bullish 📈\nConfidence: 87%\nKey Drivers: Earnings beat, AI demand', time: '4:12 PM' },
-                { type: 'sent', text: 'Should I buy now?', time: '4:13 PM' },
-                { type: 'typing', text: 'Analyzing entry points...', time: '' }
-            ]
-        }
+        ]
     }
 ]
 
@@ -89,7 +68,14 @@ export function HeroSection() {
     const [currentSlide, setCurrentSlide] = useState(0)
     const [isPaused, setIsPaused] = useState(false)
     const [isTransitioning, setIsTransitioning] = useState(false)
+    const [platform, setPlatform] = useState<{ isIOS: boolean; isAndroid: boolean; isMobile: boolean } | null>(null)
 
+    // Detect platform on mount
+    useEffect(() => {
+        setPlatform(detectPlatform())
+    }, [])
+
+    // Auto-slide carousel
     useEffect(() => {
         if (isPaused) return
 
@@ -118,6 +104,18 @@ export function HeroSection() {
             setCurrentSlide((prev) => (prev - 1 + carouselSlides.length) % carouselSlides.length)
             setIsTransitioning(false)
         }, 300)
+    }
+
+    // Handle app download based on platform
+    const handleAppDownload = () => {
+        if (platform?.isIOS) {
+            // Replace with your actual App Store URL
+            window.location.href = 'https://apps.apple.com/app/your-app-id'
+        } else if (platform?.isAndroid) {
+            // Replace with your Play Store URL or direct APK download
+            window.location.href = 'https://play.google.com/store/apps/details?id=com.trading.app'
+            // For direct APK: window.location.href = '/api/download/android'
+        }
     }
 
     const slide = carouselSlides[currentSlide]
@@ -152,32 +150,75 @@ export function HeroSection() {
                             {slide.description}
                         </p>
 
-                        {/* App Download Buttons */}
-                        {slide.showAppDownload ? (
+                        {/* Dynamic Download Buttons */}
+                        {slide.showAppDownload && platform ? (
                             <div className="space-y-6">
-                                <p className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Download Our App</p>
-                                <div className="flex flex-col sm:flex-row gap-4">
-                                    <Link href="#" className="inline-block group">
-                                        <div className="flex items-center gap-3 px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-xl transition-all shadow-md hover:shadow-lg group-hover:scale-105">
-                                            <Apple className="h-8 w-8" />
-                                            <div className="text-left">
-                                                <div className="text-xs font-medium">Download on the</div>
-                                                <div className="text-lg font-bold">App Store</div>
-                                            </div>
+                                {platform.isMobile ? (
+                                    /* Single Smart Download Button for Mobile */
+                                    <button 
+                                        onClick={handleAppDownload}
+                                        className="w-full sm:w-auto group"
+                                    >
+                                        <div className="flex items-center justify-center gap-4 px-8 py-4 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl transition-all shadow-lg hover:shadow-xl group-hover:scale-105">
+                                            {platform.isIOS ? (
+                                                <>
+                                                    <Apple className="h-12 w-12" />
+                                                    <div className="text-left">
+                                                        <div className="text-sm font-medium opacity-90">Download for</div>
+                                                        <div className="text-2xl font-bold">iPhone</div>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Play className="h-12 w-12" />
+                                                    <div className="text-left">
+                                                        <div className="text-sm font-medium opacity-90">Download for</div>
+                                                        <div className="text-2xl font-bold">Android</div>
+                                                    </div>
+                                                </>
+                                            )}
+                                            <ArrowRight className="ml-2 h-6 w-6 group-hover:translate-x-1 transition-transform" />
                                         </div>
-                                    </Link>
-                                    <Link href="#" className="inline-block group">
-                                        <div className="flex items-center gap-3 px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-xl transition-all shadow-md hover:shadow-lg group-hover:scale-105">
-                                            <Play className="h-8 w-8" />
-                                            <div className="text-left">
-                                                <div className="text-xs font-medium">Get it on</div>
-                                                <div className="text-lg font-bold">Google Play</div>
-                                            </div>
+                                    </button>
+                                ) : (
+                                    /* Both Buttons for Desktop */
+                                    <>
+                                        <p className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Download Our App</p>
+                                        <div className="flex flex-col sm:flex-row gap-4">
+                                            <a 
+                                                href="https://apps.apple.com/app/your-app-id" 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="inline-block group"
+                                            >
+                                                <div className="flex items-center gap-3 px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-xl transition-all shadow-md hover:shadow-lg group-hover:scale-105">
+                                                    <Apple className="h-8 w-8" />
+                                                    <div className="text-left">
+                                                        <div className="text-xs font-medium">Download on the</div>
+                                                        <div className="text-lg font-bold">App Store</div>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                            <a 
+                                                href="https://play.google.com/store/apps/details?id=com.trading.app" 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="inline-block group"
+                                            >
+                                                <div className="flex items-center gap-3 px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-xl transition-all shadow-md hover:shadow-lg group-hover:scale-105">
+                                                    <Play className="h-8 w-8" />
+                                                    <div className="text-left">
+                                                        <div className="text-xs font-medium">Get it on</div>
+                                                        <div className="text-lg font-bold">Google Play</div>
+                                                    </div>
+                                                </div>
+                                            </a>
                                         </div>
-                                    </Link>
-                                </div>
+                                    </>
+                                )}
                             </div>
                         ) : (
+                            /* Default CTAs for non-download slides */
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <Link href="/registration">
                                     <Button size="lg" className="h-14 px-8 bg-emerald-600 hover:bg-emerald-700 text-white text-base font-semibold group shadow-md hover:shadow-lg transition-all">
@@ -206,11 +247,8 @@ export function HeroSection() {
 
                     {/* Mobile Mockup */}
                     <div className={`relative transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-x-[20px]' : 'opacity-100 translate-x-0'}`}>
-                        {/* Phone Frame */}
                         <div className="relative mx-auto max-w-[400px]">
-                            {/* Phone Container with gradient background */}
-                            <div className="relative  bg-black rounded-[3rem] p-3 shadow-2xl">
-                                {/* Phone Screen */}
+                            <div className="relative bg-black rounded-[3rem] p-3 shadow-2xl">
                                 <div className="bg-gray-900 rounded-[2.5rem] overflow-hidden shadow-inner">
                                     {/* Status Bar */}
                                     <div className="bg-gray-900 px-6 py-3 flex items-center justify-between text-white text-xs">
@@ -233,13 +271,11 @@ export function HeroSection() {
                                         </div>
                                     </div>
 
-                                    {/* Chat Messages */}
                                     {/* Trading App Screen */}
                                     <div className="bg-gray-50 min-h-[500px] relative overflow-hidden">
                                         {/* Slide 1: Trading Dashboard */}
                                         {currentSlide === 0 && (
                                             <div className="p-4 space-y-4 animate-in fade-in duration-500">
-                                                {/* Portfolio Summary */}
                                                 <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl p-4 text-white shadow-lg">
                                                     <div className="text-xs opacity-80 mb-1">Portfolio Value</div>
                                                     <div className="text-3xl font-bold mb-2">$47,382.50</div>
@@ -250,7 +286,6 @@ export function HeroSection() {
                                                     </div>
                                                 </div>
 
-                                                {/* Quick Stats */}
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div className="bg-white rounded-xl p-3 shadow-sm">
                                                         <div className="text-xs text-gray-500 mb-1">Day's Gain</div>
@@ -262,14 +297,13 @@ export function HeroSection() {
                                                     </div>
                                                 </div>
 
-                                                {/* Holdings */}
                                                 <div className="bg-white rounded-xl p-4 shadow-sm">
                                                     <h3 className="text-sm font-bold text-gray-900 mb-3">Top Holdings</h3>
                                                     <div className="space-y-3">
                                                         {[
-                                                            { symbol: 'AAPL', name: 'Apple Inc.', shares: '25', value: '$4,461', change: '+2.34%', positive: true },
-                                                            { symbol: 'TSLA', name: 'Tesla Inc.', shares: '15', value: '$3,642', change: '+5.67%', positive: true },
-                                                            { symbol: 'NVDA', name: 'NVIDIA', shares: '12', value: '$5,942', change: '+3.21%', positive: true }
+                                                            { symbol: 'AAPL', shares: '25', value: '$4,461', change: '+2.34%' },
+                                                            { symbol: 'TSLA', shares: '15', value: '$3,642', change: '+5.67%' },
+                                                            { symbol: 'NVDA', shares: '12', value: '$5,942', change: '+3.21%' }
                                                         ].map((stock, i) => (
                                                             <div key={i} className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-3">
@@ -283,9 +317,7 @@ export function HeroSection() {
                                                                 </div>
                                                                 <div className="text-right">
                                                                     <div className="text-sm font-semibold text-gray-900">{stock.value}</div>
-                                                                    <div className={`text-xs font-semibold ${stock.positive ? 'text-emerald-600' : 'text-red-600'}`}>
-                                                                        {stock.change}
-                                                                    </div>
+                                                                    <div className="text-xs font-semibold text-emerald-600">{stock.change}</div>
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -294,48 +326,18 @@ export function HeroSection() {
                                             </div>
                                         )}
 
-                                        {/* Slide 2: Price Alerts & Notifications */}
+                                        {/* Slide 2: Alerts */}
                                         {currentSlide === 1 && (
                                             <div className="p-4 space-y-3 animate-in fade-in duration-500">
                                                 <div className="flex items-center justify-between mb-2">
                                                     <h3 className="text-sm font-bold text-gray-900">Alerts & Notifications</h3>
                                                     <span className="text-xs text-emerald-600 font-semibold">3 New</span>
                                                 </div>
-
-                                                {/* Alert Cards */}
                                                 {[
-                                                    {
-                                                        icon: '📈',
-                                                        title: 'Price Target Hit',
-                                                        subtitle: 'Bitcoin reached $43,256',
-                                                        time: '2 min ago',
-                                                        change: '+3.42%',
-                                                        positive: true
-                                                    },
-                                                    {
-                                                        icon: '⚡',
-                                                        title: 'Technical Signal',
-                                                        subtitle: 'TSLA crossed 50-day MA',
-                                                        time: '15 min ago',
-                                                        change: '+5.67%',
-                                                        positive: true
-                                                    },
-                                                    {
-                                                        icon: '📊',
-                                                        title: 'Earnings Alert',
-                                                        subtitle: 'AAPL reports tomorrow',
-                                                        time: '1 hour ago',
-                                                        change: 'Before Market',
-                                                        positive: true
-                                                    },
-                                                    {
-                                                        icon: '🔔',
-                                                        title: 'Market News',
-                                                        subtitle: 'Fed announces rate decision',
-                                                        time: '2 hours ago',
-                                                        change: 'High Impact',
-                                                        positive: false
-                                                    }
+                                                    { icon: '📈', title: 'Price Target Hit', subtitle: 'Bitcoin reached $43,256', time: '2 min ago', change: '+3.42%' },
+                                                    { icon: '⚡', title: 'Technical Signal', subtitle: 'TSLA crossed 50-day MA', time: '15 min ago', change: '+5.67%' },
+                                                    { icon: '📊', title: 'Earnings Alert', subtitle: 'AAPL reports tomorrow', time: '1 hour ago', change: 'Before Market' },
+                                                    { icon: '🔔', title: 'Market News', subtitle: 'Fed announces rate decision', time: '2 hours ago', change: 'High Impact' }
                                                 ].map((alert, i) => (
                                                     <div key={i} className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-emerald-500">
                                                         <div className="flex items-start justify-between mb-2">
@@ -346,8 +348,7 @@ export function HeroSection() {
                                                                     <div className="text-xs text-gray-600 mt-0.5">{alert.subtitle}</div>
                                                                 </div>
                                                             </div>
-                                                            <span className={`text-xs font-semibold px-2 py-1 rounded ${alert.positive ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'
-                                                                }`}>
+                                                            <span className="text-xs font-semibold px-2 py-1 rounded bg-emerald-100 text-emerald-700">
                                                                 {alert.change}
                                                             </span>
                                                         </div>
@@ -357,10 +358,9 @@ export function HeroSection() {
                                             </div>
                                         )}
 
-                                        {/* Slide 3: Security Dashboard */}
+                                        {/* Slide 3: Security */}
                                         {currentSlide === 2 && (
                                             <div className="p-4 space-y-4 animate-in fade-in duration-500">
-                                                {/* Security Status */}
                                                 <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl p-4 text-white shadow-lg">
                                                     <div className="flex items-center gap-3 mb-3">
                                                         <Shield className="w-8 h-8" />
@@ -383,15 +383,14 @@ export function HeroSection() {
                                                     </div>
                                                 </div>
 
-                                                {/* Security Features */}
                                                 <div className="bg-white rounded-xl p-4 shadow-sm">
                                                     <h3 className="text-sm font-bold text-gray-900 mb-3">Security Features</h3>
                                                     <div className="space-y-3">
                                                         {[
-                                                            { icon: '🔐', title: 'Two-Factor Authentication', status: 'Enabled', color: 'emerald' },
-                                                            { icon: '👤', title: 'Biometric Login', status: 'Face ID Active', color: 'emerald' },
-                                                            { icon: '🛡️', title: 'Device Management', status: '2 Trusted Devices', color: 'emerald' },
-                                                            { icon: '📱', title: 'Login Notifications', status: 'Push & Email', color: 'emerald' }
+                                                            { icon: '🔐', title: 'Two-Factor Authentication', status: 'Enabled' },
+                                                            { icon: '👤', title: 'Biometric Login', status: 'Face ID Active' },
+                                                            { icon: '🛡️', title: 'Device Management', status: '2 Trusted Devices' },
+                                                            { icon: '📱', title: 'Login Notifications', status: 'Push & Email' }
                                                         ].map((feature, i) => (
                                                             <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                                                                 <div className="flex items-center gap-3">
@@ -401,37 +400,17 @@ export function HeroSection() {
                                                                         <div className="text-xs text-gray-600">{feature.status}</div>
                                                                     </div>
                                                                 </div>
-                                                                <div className={`w-2 h-2 rounded-full bg-${feature.color}-500`} />
+                                                                <div className="w-2 h-2 rounded-full bg-emerald-500" />
                                                             </div>
                                                         ))}
-                                                    </div>
-                                                </div>
-
-                                                {/* Recent Activity */}
-                                                <div className="bg-white rounded-xl p-4 shadow-sm">
-                                                    <h3 className="text-sm font-bold text-gray-900 mb-3">Recent Security Activity</h3>
-                                                    <div className="space-y-2 text-xs">
-                                                        <div className="flex justify-between py-2 border-b border-gray-100">
-                                                            <span className="text-gray-600">Login from Delhi, India</span>
-                                                            <span className="text-emerald-600 font-semibold">✓ Verified</span>
-                                                        </div>
-                                                        <div className="flex justify-between py-2 border-b border-gray-100">
-                                                            <span className="text-gray-600">Password changed</span>
-                                                            <span className="text-gray-500">2 days ago</span>
-                                                        </div>
-                                                        <div className="flex justify-between py-2">
-                                                            <span className="text-gray-600">New device added</span>
-                                                            <span className="text-gray-500">5 days ago</span>
-                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         )}
 
-                                        {/* Slide 4: AI Trading Insights */}
+                                        {/* Slide 4: AI Insights */}
                                         {currentSlide === 3 && (
                                             <div className="p-4 space-y-4 animate-in fade-in duration-500">
-                                                {/* AI Header */}
                                                 <div className="bg-gradient-to-br from-purple-600 to-purple-700 rounded-2xl p-4 text-white shadow-lg">
                                                     <div className="flex items-center gap-3 mb-2">
                                                         <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
@@ -444,7 +423,6 @@ export function HeroSection() {
                                                     </div>
                                                 </div>
 
-                                                {/* AI Predictions */}
                                                 <div className="bg-white rounded-xl p-4 shadow-sm">
                                                     <h3 className="text-sm font-bold text-gray-900 mb-3">Today's Predictions</h3>
                                                     <div className="space-y-3">
@@ -457,10 +435,7 @@ export function HeroSection() {
                                                                 <div className="flex items-center justify-between mb-2">
                                                                     <div className="flex items-center gap-2">
                                                                         <span className="font-bold text-gray-900">{stock.symbol}</span>
-                                                                        <span className={`text-xs px-2 py-0.5 rounded ${stock.prediction === 'Bullish'
-                                                                            ? 'bg-emerald-100 text-emerald-700'
-                                                                            : 'bg-gray-200 text-gray-700'
-                                                                            }`}>
+                                                                        <span className="text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
                                                                             {stock.prediction}
                                                                         </span>
                                                                     </div>
@@ -476,55 +451,16 @@ export function HeroSection() {
                                                                         <span className="font-semibold text-emerald-600">{stock.target}</span>
                                                                     </div>
                                                                 </div>
-                                                                {/* Progress Bar */}
                                                                 <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                                                    <div
-                                                                        className="h-full bg-purple-600 rounded-full"
-                                                                        style={{ width: `${stock.confidence}%` }}
-                                                                    />
+                                                                    <div className="h-full bg-purple-600 rounded-full" style={{ width: `${stock.confidence}%` }} />
                                                                 </div>
                                                             </div>
                                                         ))}
                                                     </div>
                                                 </div>
-
-                                                {/* Market Sentiment */}
-                                                <div className="bg-white rounded-xl p-4 shadow-sm">
-                                                    <h3 className="text-sm font-bold text-gray-900 mb-3">Market Sentiment</h3>
-                                                    <div className="space-y-3">
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-sm text-gray-700">Overall Market</span>
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                                                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: '68%' }} />
-                                                                </div>
-                                                                <span className="text-xs font-semibold text-emerald-600">68% Bullish</span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-sm text-gray-700">Tech Sector</span>
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                                                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: '82%' }} />
-                                                                </div>
-                                                                <span className="text-xs font-semibold text-emerald-600">82% Bullish</span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-sm text-gray-700">Crypto Market</span>
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                                                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: '74%' }} />
-                                                                </div>
-                                                                <span className="text-xs font-semibold text-emerald-600">74% Bullish</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
                                             </div>
                                         )}
                                     </div>
-
 
                                     {/* Input Bar */}
                                     <div className="bg-white px-4 py-3 flex items-center gap-3 border-t border-gray-200">
@@ -569,10 +505,11 @@ export function HeroSection() {
                                         setIsTransitioning(false)
                                     }, 300)
                                 }}
-                                className={`h-2.5 rounded-full transition-all ${index === currentSlide
-                                    ? 'w-8 bg-emerald-600'
-                                    : 'w-2.5 bg-gray-300 hover:bg-emerald-400'
-                                    }`}
+                                className={`h-2.5 rounded-full transition-all ${
+                                    index === currentSlide
+                                        ? 'w-8 bg-emerald-600'
+                                        : 'w-2.5 bg-gray-300 hover:bg-emerald-400'
+                                }`}
                                 aria-label={`Go to slide ${index + 1}`}
                             />
                         ))}

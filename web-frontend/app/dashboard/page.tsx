@@ -10,15 +10,17 @@ import { RecentActivityTable } from "@/components/dashboard/RecentActivityTable"
 import { Watchlist } from "@/components/dashboard/Watchlist"
 import { Notifications } from "@/components/dashboard/Notifications"
 import { ChartCard } from "@/components/dashboard/ChartCard"
+import { MobileDashboardWrapper } from "@/components/mobile/MobileDashboardWrapper"
 import { CreditCard, TrendingUp, Bell, RefreshCcw } from "lucide-react"
 import { api } from "@/lib/api"
 import { useAuth } from "@/contexts/AuthContext"
 import { useRouter } from "next/navigation"
 import { useRequireAuth } from "@/contexts/AuthContext"
 
+
 export default function DashboardPage() {
   const { user } = useAuth()
-  useRequireAuth()  
+  useRequireAuth()
   const router = useRouter()
   const [isKYCModalOpen, setIsKYCModalOpen] = useState(false)
   const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState(false)
@@ -335,245 +337,247 @@ export default function DashboardPage() {
   })
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950">
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Welcome Header with Stats */}
-        <div className="mb-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-            <div>
-              <h2 className="text-3xl font-bold text-white mb-1">Welcome back, {user?.fullname || 'Trader'} 👋</h2>
-              <p className="text-slate-400 text-sm">Here's what's happening with your portfolio today</p>
-            </div>
-            <div className="flex items-center gap-2 mt-4 md:mt-0">
-              <span className="text-xs text-slate-500">Last updated: {new Date().toLocaleTimeString()}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-slate-400 hover:text-white"
-                onClick={handleRefresh}
-                disabled={isLoading}
-              >
-                <RefreshCcw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-              </Button>
-            </div>
-          </div>
-
-          {/* Enhanced Stats Cards - ALL DYNAMIC */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StatCard
-              label="Total Balance"
-              value={`$${totalBalance.toFixed(2)}`}
-              change={balanceChangeStr}
-              isPositive={isPositiveChange}
-              subtext="vs last month"
-              icon={TrendingUp}
-              color="emerald"
-            />
-            <StatCard
-              label="Recent Deposits"
-              value={`$${totalDeposited.toFixed(2)}`}
-              subtext={`${activities.filter((a: any) => a.type === 'deposit').length} transactions this week`}
-              icon={CreditCard}
-              color="blue"
-            />
-            <StatCard
-              label="Pending Actions"
-              value={pendingActions.toString()}
-              icon={Bell}
-              color="amber"
-              action={verificationPending && (
-                <Button
-                  size="sm"
-                  className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 w-full"
-                  onClick={() => setIsKYCModalOpen(true)}
-                >
-                  Complete KYC
-                </Button>
-              )}
-            />
-          </div>
-        </div>
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Sidebar - Notifications & Watchlist */}
-          <div className="lg:col-span-4 space-y-6">
-            <Notifications notifications={formattedNotifications} actionRequired={verificationPending} />
-            <Watchlist onAdd={() => router.push('/dashboard/market')} />
-          </div>
-
-          {/* Right Content - Charts & Activity */}
-          <div className="lg:col-span-8 space-y-6">
-            {/* Charts Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <ChartCard
-                title="Portfolio Performance"
-                options={lineChartOptions}
-                series={lineChartSeries}
-                type="area"
-                actions={
-                  <>
-                    <button
-                      onClick={() => setPortfolioPeriod('1M')}
-                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${portfolioPeriod === '1M' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400 hover:bg-white/5'
-                        }`}
-                    >
-                      1M
-                    </button>
-                    <button
-                      onClick={() => setPortfolioPeriod('3M')}
-                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${portfolioPeriod === '3M' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400 hover:bg-white/5'
-                        }`}
-                    >
-                      3M
-                    </button>
-                    <button
-                      onClick={() => setPortfolioPeriod('1Y')}
-                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${portfolioPeriod === '1Y' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400 hover:bg-white/5'
-                        }`}
-                    >
-                      1Y
-                    </button>
-                  </>
-                }
-              />
-              <ChartCard
-                title="Deposit Activity"
-                options={barChartOptions}
-                series={barChartSeries}
-                type="bar"
-                actions={
-                  <>
-                    <button
-                      onClick={() => setDepositPeriod('1M')}
-                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${depositPeriod === '1M' ? 'bg-blue-500/20 text-blue-400' : 'text-slate-400 hover:bg-white/5'
-                        }`}
-                    >
-                      1M
-                    </button>
-                    <button
-                      onClick={() => setDepositPeriod('3M')}
-                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${depositPeriod === '3M' ? 'bg-blue-500/20 text-blue-400' : 'text-slate-400 hover:bg-white/5'
-                        }`}
-                    >
-                      3M
-                    </button>
-                    <button
-                      onClick={() => setDepositPeriod('1Y')}
-                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${depositPeriod === '1Y' ? 'bg-blue-500/20 text-blue-400' : 'text-slate-400 hover:bg-white/5'
-                        }`}
-                    >
-                      1Y
-                    </button>
-                  </>
-                }
-              />
-            </div>
-
-            {/* Activity Table */}
-            <RecentActivityTable activities={formattedActivities} onViewAll={() => window.location.href = '/dashboard/wallet'} />
-          </div>
-        </div>
-      </div>
-
-      {/* Modals */}
-      <Modal
-        isOpen={isKYCModalOpen}
-        onClose={() => setIsKYCModalOpen(false)}
-        title="Complete KYC Verification"
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-slate-400">
-            To unlock full trading features and higher limits, please complete our secure verification process.
-          </p>
-          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4">
-            <h4 className="text-sm font-semibold text-emerald-400 mb-2">What you'll need:</h4>
-            <ul className="text-xs text-slate-300 space-y-1">
-              <li>• Government-issued ID (Passport, Driver's License, or National ID)</li>
-              <li>• Proof of address (Utility bill or bank statement)</li>
-              <li>• A clear selfie with your ID</li>
-              <li>• Phone number for verification</li>
-            </ul>
-          </div>
-          <p className="text-xs text-slate-400">
-            The verification process typically takes 5-10 minutes. Your documents will be reviewed within 24-48 hours.
-          </p>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="ghost" onClick={() => setIsKYCModalOpen(false)}>Later</Button>
-            <Link href="/dashboard/verification">
-              <Button className="bg-emerald-500 hover:bg-emerald-600 text-white">
-                Start Verification
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal
-        isOpen={isWatchlistModalOpen}
-        onClose={() => setIsWatchlistModalOpen(false)}
-        title="Add to Watchlist"
-      >
-        <div className="space-y-4">
-          <div className="space-y-2 relative">
-            <label className="text-xs font-medium text-slate-300">Asset Symbol</label>
-            <Input
-              placeholder="Search e.g. BTC, Apple, Gold"
-              value={newWatchlistSymbol}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="bg-slate-900 border-white/10 text-white"
-            />
-
-            {/* Search Results Dropdown */}
-            {(searchResults.length > 0 || isSearching) && newWatchlistSymbol.length >= 2 && (
-              <div className="absolute z-10 w-full mt-1 bg-slate-800 border border-white/10 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                {isSearching ? (
-                  <div className="p-3 text-center text-slate-400 text-xs">Searching...</div>
-                ) : (
-                  searchResults.map((result: any) => (
-                    <div
-                      key={result.symbol}
-                      className="p-2 hover:bg-slate-700 cursor-pointer flex justify-between items-center transition-colors"
-                      onClick={() => {
-                        setNewWatchlistSymbol(result.symbol)
-                        if (result.type?.includes('Crypto')) setNewWatchlistType('cryptocurrency')
-                        else if (result.type?.includes('Stock')) setNewWatchlistType('stock')
-                        else if (result.type?.includes('Forex')) setNewWatchlistType('forex')
-                        setSearchResults([])
-                      }}
-                    >
-                      <div>
-                        <div className="font-bold text-white text-sm">{result.displaySymbol || result.symbol}</div>
-                        <div className="text-slate-400 text-xs">{result.description}</div>
-                      </div>
-                      <div className="text-slate-500 text-xs bg-slate-900 px-2 py-1 rounded border border-white/5">
-                        {result.type}
-                      </div>
-                    </div>
-                  ))
-                )}
+    <MobileDashboardWrapper onRefresh={handleRefresh}>
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          {/* Welcome Header with Stats */}
+          <div className="mb-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+              <div>
+                <h2 className="text-3xl font-bold text-white mb-1">Welcome back, {user?.fullname || 'Trader'} 👋</h2>
+                <p className="text-slate-400 text-sm">Here's what's happening with your portfolio today</p>
               </div>
-            )}
+              <div className="flex items-center gap-2 mt-4 md:mt-0">
+                <span className="text-xs text-slate-500">Last updated: {new Date().toLocaleTimeString()}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-slate-400 hover:text-white"
+                  onClick={handleRefresh}
+                  disabled={isLoading}
+                >
+                  <RefreshCcw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
+            </div>
+
+            {/* Enhanced Stats Cards - ALL DYNAMIC */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <StatCard
+                label="Total Balance"
+                value={`$${totalBalance.toFixed(2)}`}
+                change={balanceChangeStr}
+                isPositive={isPositiveChange}
+                subtext="vs last month"
+                icon={TrendingUp}
+                color="emerald"
+              />
+              <StatCard
+                label="Recent Deposits"
+                value={`$${totalDeposited.toFixed(2)}`}
+                subtext={`${activities.filter((a: any) => a.type === 'deposit').length} transactions this week`}
+                icon={CreditCard}
+                color="blue"
+              />
+              <StatCard
+                label="Pending Actions"
+                value={pendingActions.toString()}
+                icon={Bell}
+                color="amber"
+                action={verificationPending && (
+                  <Button
+                    size="sm"
+                    className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 w-full"
+                    onClick={() => setIsKYCModalOpen(true)}
+                  >
+                    Complete KYC
+                  </Button>
+                )}
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-slate-300">Asset Type</label>
-            <select
-              value={newWatchlistType}
-              onChange={(e) => setNewWatchlistType(e.target.value as any)}
-              className="w-full bg-slate-900 border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-            >
-              <option value="cryptocurrency">Cryptocurrency</option>
-              <option value="stock">Stock</option>
-              <option value="forex">Forex</option>
-              <option value="commodity">Commodity</option>
-            </select>
-          </div>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="ghost" onClick={() => setIsWatchlistModalOpen(false)}>Cancel</Button>
-            <Button className="bg-emerald-500 hover:bg-emerald-600 text-white" onClick={handleAddWatchlist}>Add Asset</Button>
+
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Left Sidebar - Notifications & Watchlist */}
+            <div className="lg:col-span-4 space-y-6">
+              <Notifications notifications={formattedNotifications} actionRequired={verificationPending} />
+              <Watchlist onAdd={() => router.push('/dashboard/market')} />
+            </div>
+
+            {/* Right Content - Charts & Activity */}
+            <div className="lg:col-span-8 space-y-6">
+              {/* Charts Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <ChartCard
+                  title="Portfolio Performance"
+                  options={lineChartOptions}
+                  series={lineChartSeries}
+                  type="area"
+                  actions={
+                    <>
+                      <button
+                        onClick={() => setPortfolioPeriod('1M')}
+                        className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${portfolioPeriod === '1M' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400 hover:bg-white/5'
+                          }`}
+                      >
+                        1M
+                      </button>
+                      <button
+                        onClick={() => setPortfolioPeriod('3M')}
+                        className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${portfolioPeriod === '3M' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400 hover:bg-white/5'
+                          }`}
+                      >
+                        3M
+                      </button>
+                      <button
+                        onClick={() => setPortfolioPeriod('1Y')}
+                        className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${portfolioPeriod === '1Y' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400 hover:bg-white/5'
+                          }`}
+                      >
+                        1Y
+                      </button>
+                    </>
+                  }
+                />
+                <ChartCard
+                  title="Deposit Activity"
+                  options={barChartOptions}
+                  series={barChartSeries}
+                  type="bar"
+                  actions={
+                    <>
+                      <button
+                        onClick={() => setDepositPeriod('1M')}
+                        className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${depositPeriod === '1M' ? 'bg-blue-500/20 text-blue-400' : 'text-slate-400 hover:bg-white/5'
+                          }`}
+                      >
+                        1M
+                      </button>
+                      <button
+                        onClick={() => setDepositPeriod('3M')}
+                        className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${depositPeriod === '3M' ? 'bg-blue-500/20 text-blue-400' : 'text-slate-400 hover:bg-white/5'
+                          }`}
+                      >
+                        3M
+                      </button>
+                      <button
+                        onClick={() => setDepositPeriod('1Y')}
+                        className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${depositPeriod === '1Y' ? 'bg-blue-500/20 text-blue-400' : 'text-slate-400 hover:bg-white/5'
+                          }`}
+                      >
+                        1Y
+                      </button>
+                    </>
+                  }
+                />
+              </div>
+
+              {/* Activity Table */}
+              <RecentActivityTable activities={formattedActivities} onViewAll={() => window.location.href = '/dashboard/wallet'} />
+            </div>
           </div>
         </div>
-      </Modal>
-    </div>
+
+        {/* Modals */}
+        <Modal
+          isOpen={isKYCModalOpen}
+          onClose={() => setIsKYCModalOpen(false)}
+          title="Complete KYC Verification"
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-slate-400">
+              To unlock full trading features and higher limits, please complete our secure verification process.
+            </p>
+            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-emerald-400 mb-2">What you'll need:</h4>
+              <ul className="text-xs text-slate-300 space-y-1">
+                <li>• Government-issued ID (Passport, Driver's License, or National ID)</li>
+                <li>• Proof of address (Utility bill or bank statement)</li>
+                <li>• A clear selfie with your ID</li>
+                <li>• Phone number for verification</li>
+              </ul>
+            </div>
+            <p className="text-xs text-slate-400">
+              The verification process typically takes 5-10 minutes. Your documents will be reviewed within 24-48 hours.
+            </p>
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="ghost" onClick={() => setIsKYCModalOpen(false)}>Later</Button>
+              <Link href="/dashboard/verification">
+                <Button className="bg-emerald-500 hover:bg-emerald-600 text-white">
+                  Start Verification
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </Modal>
+
+        <Modal
+          isOpen={isWatchlistModalOpen}
+          onClose={() => setIsWatchlistModalOpen(false)}
+          title="Add to Watchlist"
+        >
+          <div className="space-y-4">
+            <div className="space-y-2 relative">
+              <label className="text-xs font-medium text-slate-300">Asset Symbol</label>
+              <Input
+                placeholder="Search e.g. BTC, Apple, Gold"
+                value={newWatchlistSymbol}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="bg-slate-900 border-white/10 text-white"
+              />
+
+              {/* Search Results Dropdown */}
+              {(searchResults.length > 0 || isSearching) && newWatchlistSymbol.length >= 2 && (
+                <div className="absolute z-10 w-full mt-1 bg-slate-800 border border-white/10 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  {isSearching ? (
+                    <div className="p-3 text-center text-slate-400 text-xs">Searching...</div>
+                  ) : (
+                    searchResults.map((result: any) => (
+                      <div
+                        key={result.symbol}
+                        className="p-2 hover:bg-slate-700 cursor-pointer flex justify-between items-center transition-colors"
+                        onClick={() => {
+                          setNewWatchlistSymbol(result.symbol)
+                          if (result.type?.includes('Crypto')) setNewWatchlistType('cryptocurrency')
+                          else if (result.type?.includes('Stock')) setNewWatchlistType('stock')
+                          else if (result.type?.includes('Forex')) setNewWatchlistType('forex')
+                          setSearchResults([])
+                        }}
+                      >
+                        <div>
+                          <div className="font-bold text-white text-sm">{result.displaySymbol || result.symbol}</div>
+                          <div className="text-slate-400 text-xs">{result.description}</div>
+                        </div>
+                        <div className="text-slate-500 text-xs bg-slate-900 px-2 py-1 rounded border border-white/5">
+                          {result.type}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-slate-300">Asset Type</label>
+              <select
+                value={newWatchlistType}
+                onChange={(e) => setNewWatchlistType(e.target.value as any)}
+                className="w-full bg-slate-900 border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              >
+                <option value="cryptocurrency">Cryptocurrency</option>
+                <option value="stock">Stock</option>
+                <option value="forex">Forex</option>
+                <option value="commodity">Commodity</option>
+              </select>
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="ghost" onClick={() => setIsWatchlistModalOpen(false)}>Cancel</Button>
+              <Button className="bg-emerald-500 hover:bg-emerald-600 text-white" onClick={handleAddWatchlist}>Add Asset</Button>
+            </div>
+          </div>
+        </Modal>
+      </div>
+    </MobileDashboardWrapper>
   )
 }

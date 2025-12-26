@@ -3,9 +3,10 @@ import { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.tradevault.app',
   appName: 'TradeVault',
-  webDir: 'public',
+  webDir: 'out', // Changed from 'public' to match Next.js output
   server: {
-    // Use your machine's hostname or IP
+    // Use your machine's hostname or IP for development
+    // Comment this out for production builds
     url: 'http://192.168.1.48:3000',
     cleartext: true,
   },
@@ -23,3 +24,4 @@ const config: CapacitorConfig = {
 };
 
 export default config;
+

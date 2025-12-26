@@ -10,20 +10,24 @@
     "lint": "next lint",
     
     "cap:sync": "npx cap sync",
-    "cap:sync:dev": "npx cap sync -c capacitor.config.dev.ts",
+    "cap:sync:dev": "npx cap sync",
+    "cap:sync:prod": "npx cap sync -c capacitor.config.prod.ts",
     
     "cap:open:ios": "npx cap open ios",
     "cap:open:android": "npx cap open android",
     
-    "cap:run:android": "npx cap run android -c capacitor.config.dev.ts",
-    "cap:run:ios": "npx cap run ios -c capacitor.config.dev.ts",
+    "cap:run:android": "npx cap run android",
+    "cap:run:ios": "npx cap run ios",
     
-    "mobile:dev:android": "npx cap sync -c capacitor.config.dev.ts && npx cap run android",
-    "mobile:dev:ios": "npx cap sync -c capacitor.config.dev.ts && npx cap run ios",
+    "mobile:dev:android": "npx cap sync && npx cap run android",
+    "mobile:dev:ios": "npx cap sync && npx cap run ios",
     
-    "mobile:build": "next build && npx cap sync",
+    "mobile:build": "next build && npx cap sync -c capacitor.config.prod.ts",
     "mobile:build:android": "npm run mobile:build && npx cap open android",
-    "mobile:build:ios": "npm run mobile:build && npx cap open ios"
+    "mobile:build:ios": "npm run mobile:build && npx cap open ios",
+    
+    "mobile:prod:android": "next build && npx cap sync -c capacitor.config.prod.ts && npx cap open android",
+    "mobile:prod:ios": "next build && npx cap sync -c capacitor.config.prod.ts && npx cap open ios"
     }
 ,
   "dependencies": {

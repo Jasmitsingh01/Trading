@@ -3,10 +3,13 @@
 
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/dashboard/Navbar";
+import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
 import { useAuth } from "@/contexts/AuthContext";
+import { isNativePlatform } from "@/lib/capacitor";
+import "../mobile.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,6 +28,11 @@ export default function DashboardLayout({
 }>) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(isNativePlatform());
+  }, []);
 
   useEffect(() => {
     // Only redirect if not loading and no user
@@ -53,10 +61,16 @@ export default function DashboardLayout({
 
   return (
     <div className={`${geistSans.variable} ${geistMono.variable} flex h-screen bg-gradient-to-br from-slate-950 via-emerald-950/20 to-slate-950`}>
-      <Navbar />
-      <main className="flex-1 h-screen overflow-y-auto">
+      {/* Desktop: Show sidebar navigation */}
+      {!isMobile && <Navbar />}
+
+      {/* Main content area */}
+      <main className={`flex-1 h-screen overflow-y-auto ${isMobile ? 'pb-20' : ''}`}>
         {children}
       </main>
+
+      {/* Mobile: Show bottom navigation */}
+      {isMobile && <MobileBottomNav />}
     </div>
   );
 }

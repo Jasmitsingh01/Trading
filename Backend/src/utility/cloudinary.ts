@@ -18,7 +18,7 @@ cloudinary.config({
  */
 export const uploadToCloudinary = async (
     fileBuffer: Buffer,
-    folder: string = 'tradevault',
+    folder: string = 'BXTPRO',
     publicId?: string
 ): Promise<{ secure_url: string; public_id: string }> => {
     return new Promise((resolve, reject) => {
@@ -61,7 +61,7 @@ export const uploadAvatar = async (
 ): Promise<string> => {
     const result = await uploadToCloudinary(
         fileBuffer,
-        'tradevault/avatars',
+        'BXTPRO/avatars',
         `avatar_${userId}_${Date.now()}`
     );
     return result.secure_url;
@@ -77,7 +77,7 @@ export const uploadKYCDocument = async (
 ): Promise<string> => {
     const result = await uploadToCloudinary(
         fileBuffer,
-        `tradevault/kyc/${userId}`,
+        `BXTPRO/kyc/${userId}`,
         `${documentType}_${Date.now()}`
     );
     return result.secure_url;

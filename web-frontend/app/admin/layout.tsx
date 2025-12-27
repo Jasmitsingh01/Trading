@@ -65,7 +65,7 @@ export default function AdminLayout({
                             <div className="h-12 w-12 rounded-xl overflow-hidden shadow-lg">
                                 <Image
                                     src="/logo.jpeg"
-                                    alt="TradingPro Logo"
+                                    alt="BXTPRO Logo"
                                     width={48}
                                     height={48}
                                     className="h-full w-full object-cover"
@@ -73,7 +73,7 @@ export default function AdminLayout({
                             </div>
                             <div>
                                 <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent">
-                                    TradingPro
+                                    BXTPRO
                                 </h1>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">Admin Panel</p>
                             </div>
@@ -151,7 +151,7 @@ export default function AdminLayout({
                                 <Menu className="h-6 w-6" />
                             </Button>
                             <span className="font-bold text-lg text-gray-900 dark:text-white lg:hidden">
-                                TradingPro
+                                BXTPRO
                             </span>
                         </div>
 

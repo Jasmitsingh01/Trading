@@ -16,7 +16,7 @@ const twilioClient = accountSid && authToken
  */
 export const sendPhoneOTP = async (phoneNumber: string, otp: string): Promise<boolean> => {
     try {
-        const message = `Your TradeVault verification code is: ${otp}. Valid for 10 minutes.`;
+        const message = `Your BXTPRO verification code is: ${otp}. Valid for 10 minutes.`;
 
         if (twilioClient && process.env.TWILIO_MESSAGING_SERVICE_SID) {
             // Production: Send actual SMS via Twilio Messaging Service

@@ -45,7 +45,7 @@ if (!admin.apps.length) {
  */
 export const sendPhoneOTP = async (phoneNumber: string, otp: string): Promise<boolean> => {
     try {
-        const message = `Your TradeVault verification code is: ${otp}. Valid for 10 minutes.`;
+        const message = `Your BXTPRO verification code is: ${otp}. Valid for 10 minutes.`;
 
         // Development mode - Display OTP prominently in console
         console.log('\n' + '='.repeat(60));
@@ -78,7 +78,7 @@ export const sendPhoneOTP = async (phoneNumber: string, otp: string): Promise<bo
         // Example 3: MessageBird
         // const messagebird = require('messagebird')(process.env.MESSAGEBIRD_API_KEY);
         // await messagebird.messages.create({
-        //     originator: 'TradeVault',
+        //     originator: 'BXTPRO',
         //     recipients: [phoneNumber],
         //     body: message
         // });

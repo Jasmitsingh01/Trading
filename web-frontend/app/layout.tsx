@@ -22,7 +22,7 @@ export default function RootLayout({
           content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
         />
         <meta name="theme-color" content="#10b981" />
-        <title>TradeVault - Trading Platform</title>
+        <title>BXTPRO - Trading Platform</title>
         <meta name="description" content="Advanced trading platform for crypto and forex" />
       </head>
       <body className={inter.className}>

@@ -69,7 +69,7 @@ export const sendEmail = async (to: string, subject: string, text: string, html?
     }
 
     const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || '"TradeVault" <noreply@tradevault.com>',
+      from: process.env.SMTP_FROM || '"BXTPRO" <noreply@BXTPRO.com>',
       to,
       subject,
       text,
@@ -99,7 +99,7 @@ export const sendEmail = async (to: string, subject: string, text: string, html?
 };
 
 export const sendEmailOTP = async (email: string, otp: string, fullname?: string) => {
-  const subject = 'Your TradeVault Verification Code';
+  const subject = 'Your BXTPRO Verification Code';
   const text = `Your verification code is: ${otp}. This code will expire in 10 minutes.`;
   const html = `
     <!DOCTYPE html>
@@ -119,12 +119,12 @@ export const sendEmailOTP = async (email: string, otp: string, fullname?: string
     <body>
       <div class="container">
         <div class="header">
-          <h1>TradeVault</h1>
+          <h1>BXTPRO</h1>
           <p>Email Verification</p>
         </div>
         <div class="content">
           <h2>Hello ${fullname || 'there'}!</h2>
-          <p>Thank you for registering with TradeVault. To complete your registration, please use the verification code below:</p>
+          <p>Thank you for registering with BXTPRO. To complete your registration, please use the verification code below:</p>
           
           <div class="otp-box">
             <p style="margin: 0; color: #666; font-size: 14px;">Your Verification Code</p>
@@ -136,14 +136,14 @@ export const sendEmailOTP = async (email: string, otp: string, fullname?: string
             <ul style="margin: 10px 0;">
               <li>This code will expire in <strong>10 minutes</strong></li>
               <li>Never share this code with anyone</li>
-              <li>TradeVault will never ask for this code via phone or email</li>
+              <li>BXTPRO will never ask for this code via phone or email</li>
             </ul>
           </div>
           
           <p>If you didn't request this code, please ignore this email or contact our support team.</p>
         </div>
         <div class="footer">
-          <p>&copy; ${new Date().getFullYear()} TradeVault. All rights reserved.</p>
+          <p>&copy; ${new Date().getFullYear()} BXTPRO. All rights reserved.</p>
           <p>This is an automated message, please do not reply.</p>
         </div>
       </div>
@@ -156,7 +156,7 @@ export const sendEmailOTP = async (email: string, otp: string, fullname?: string
 };
 
 export const sendPasswordResetEmail = async (email: string, otp: string, name: string) => {
-  const subject = 'Password Reset OTP - TradingPro';
+  const subject = 'Password Reset OTP - BXTPRO';
   const text = `Your password reset OTP is: ${otp}. This code will expire in 10 minutes.`;
   const html = `
     <!DOCTYPE html>
@@ -194,7 +194,7 @@ export const sendPasswordResetEmail = async (email: string, otp: string, name: s
           <p>For security reasons, this OTP will expire in 10 minutes.</p>
           
           <div class="footer">
-            <p>© 2025 TradingPro. All rights reserved.</p>
+            <p>© 2025 BXTPRO. All rights reserved.</p>
             <p>This is an automated email. Please do not reply.</p>
           </div>
         </div>

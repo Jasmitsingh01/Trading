@@ -13,18 +13,18 @@ interface WalletOverviewProps {
 
 export function WalletOverview({ data }: WalletOverviewProps) {
     return (
-        <div className="bg-transparent border border-white/10 rounded-lg p-6">
+        <div className="bg-transparent border border-white/10 rounded-lg p-4 lg:p-6">
             <h2 className="text-lg font-bold mb-4 text-white">Wallet overview</h2>
             <p className="text-xs text-slate-400 mb-4">Available balances and holdings</p>
 
-            <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
                     <div className="text-xs text-slate-400 mb-1">Total wallet value</div>
-                    <div className="text-3xl font-bold text-white">{data.totalBalance}</div>
+                    <div className="text-2xl lg:text-3xl font-bold text-white">{data.totalBalance}</div>
                 </div>
                 <div>
                     <div className="text-xs text-slate-400 mb-1">Available</div>
-                    <div className="text-3xl font-bold text-white">{data.available}</div>
+                    <div className="text-2xl lg:text-3xl font-bold text-white">{data.available}</div>
                 </div>
             </div>
 

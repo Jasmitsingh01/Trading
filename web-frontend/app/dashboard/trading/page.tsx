@@ -5,6 +5,7 @@ import { api } from "@/lib/api"
 import { useAuth } from "@/contexts/AuthContext"
 import LiveWatchlistSidebar from "@/components/dashboard/LiveWatchlistSidebar"
 import { TradingHeader } from "@/components/dashboard/TradingHeader"
+import { X, BarChart3, TrendingUp, Search, Activity, Zap, Globe, Clock } from 'lucide-react'
 import TradingViewWidget from "@/components/dashboard/TradingViewWidget"
 import LiveTradingChart from "@/components/dashboard/LiveTradingChart"
 import { OrderTicket } from "@/components/dashboard/OrderTicket"
@@ -22,7 +23,21 @@ export default function Trading() {
   const [positions, setPositions] = useState<any[]>([])
   const [accountBalance, setAccountBalance] = useState<any>(null)
   const [chartMode, setChartMode] = useState<'tradingview' | 'live'>('live')
-  
+
+  // State for mobile view
+  const [isMobile, setIsMobile] = useState(false);
+  const [showWatchlist, setShowWatchlist] = useState(false);
+  const [activeMobileView, setActiveMobileView] = useState<'chart' | 'orders' | 'positions'>('chart');
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // Fetch all crypto symbols
   const [cryptoSymbols, setCryptoSymbols] = useState<CryptoData[]>([])
   const [areSymbolsLoaded, setAreSymbolsLoaded] = useState(false)
@@ -39,10 +54,10 @@ export default function Trading() {
   })
 
   // Subscribe to real-time forex prices
-  const { 
-    forexRates: liveForexPrices, 
-    forexSymbols, 
-    loading: isLoadingForex, 
+  const {
+    forexRates: liveForexPrices,
+    forexSymbols,
+    loading: isLoadingForex,
     error: forexError,
     isConnected: isForexConnected,
     status: forexStatus,
@@ -56,7 +71,7 @@ export default function Trading() {
 
   // Combine crypto and forex into live assets with real-time data
   const liveAssets = useMemo(() => {
-    const assets: Array<{ 
+    const assets: Array<{
       symbol: string
       name: string
       assetType: 'crypto' | 'forex'
@@ -83,7 +98,7 @@ export default function Trading() {
       forexSymbols.slice(0, 30).forEach((forexSymbol: any) => {
         const symbol = forexSymbol.symbol || forexSymbol.displaySymbol || forexSymbol
         const liveRate = liveForexPrices?.[symbol]
-        
+
         assets.push({
           symbol: symbol,
           name: forexSymbol.description || symbol,
@@ -361,30 +376,44 @@ export default function Trading() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 text-white flex">
-      <LiveWatchlistSidebar
-        assets={liveAssets}
-        onSymbolSelect={(symbol, assetType) => {
-          console.log(`🎯 Selected: ${symbol} (${assetType})`)
-          setSelectedSymbol(symbol)
-          setSelectedAssetType(assetType as 'crypto' | 'forex')
-          
-          // Update TradingView symbol
-          let tvSymbol = ''
-          if (assetType === 'forex') {
-            tvSymbol = symbol.includes(':') 
-              ? `FX_IDC:${symbol.split(':')[1].replace('_', '')}` 
-              : `FX:${symbol.replace('_', '')}`
-          } else {
-            tvSymbol = `BINANCE:${symbol}`
-          }
-          setTradingViewSymbol(tvSymbol)
-        }}
-        selectedSymbol={selectedSymbol}
-        showCharts={true}
-      />
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 text-white flex flex-col lg:flex-row">
+      {/* Mobile Watchlist Toggle Button */}
+      {isMobile && (
+        <button
+          onClick={() => setShowWatchlist(!showWatchlist)}
+          className="fixed bottom-24 right-6 z-50 p-4 bg-emerald-600 rounded-full shadow-lg text-white"
+        >
+          {showWatchlist ? <X className="w-6 h-6" /> : <BarChart3 className="w-6 h-6" />}
+        </button>
+      )}
 
-      <div className="flex-1 flex flex-col bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950">
+      {/* Watchlist Sidebar - Conditional on Mobile */}
+      <div className={`${isMobile ? (showWatchlist ? 'fixed inset-0 z-40 bg-slate-950 pt-20' : 'hidden') : 'w-80 border-r border-gray-800'}`}>
+        <LiveWatchlistSidebar
+          assets={liveAssets}
+          onSymbolSelect={(symbol, assetType) => {
+            console.log(`🎯 Selected: ${symbol} (${assetType})`)
+            setSelectedSymbol(symbol)
+            setSelectedAssetType(assetType as 'crypto' | 'forex')
+
+            // Update TradingView symbol
+            let tvSymbol = ''
+            if (assetType === 'forex') {
+              tvSymbol = symbol.includes(':')
+                ? `FX_IDC:${symbol.split(':')[1].replace('_', '')}`
+                : `FX:${symbol.replace('_', '')}`
+            } else {
+              tvSymbol = `BINANCE:${symbol}`
+            }
+            setTradingViewSymbol(tvSymbol)
+            if (isMobile) setShowWatchlist(false)
+          }}
+          selectedSymbol={selectedSymbol}
+          showCharts={!isMobile}
+        />
+      </div>
+
+      <div className="flex-1 flex flex-col bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 overflow-hidden">
         <TradingHeader
           symbol={selectedSymbol}
           price={liveQuoteData?.price}
@@ -392,122 +421,147 @@ export default function Trading() {
           changePercent={liveQuoteData?.changePercent}
         />
 
-        <div className="flex-1 flex">
-          <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col lg:flex-row">
+          <div className="flex-1 flex flex-col overflow-y-auto">
+            {/* Mobile Navigation Tabs */}
+            {isMobile && (
+              <div className="flex border-b border-white/5 bg-slate-950/50">
+                <button
+                  onClick={() => setActiveMobileView('chart')}
+                  className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${activeMobileView === 'chart' ? 'text-emerald-500 border-b-2 border-emerald-500' : 'text-slate-500'}`}
+                >
+                  Chart
+                </button>
+                <button
+                  onClick={() => setActiveMobileView('orders')}
+                  className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${activeMobileView === 'orders' ? 'text-emerald-500 border-b-2 border-emerald-500' : 'text-slate-500'}`}
+                >
+                  Orders
+                </button>
+                <button
+                  onClick={() => setActiveMobileView('positions')}
+                  className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${activeMobileView === 'positions' ? 'text-emerald-500 border-b-2 border-emerald-500' : 'text-slate-500'}`}
+                >
+                  Positions
+                </button>
+              </div>
+            )}
+
             {/* Chart Mode Toggle & Status */}
-            <div className="px-6 pt-6 pb-3 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-slate-400">Chart:</span>
-                  <div className="flex items-center gap-2 bg-slate-900/50 rounded-lg p-1">
-                    <button
-                      onClick={() => setChartMode('live')}
-                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                        chartMode === 'live'
-                          ? 'bg-emerald-500 text-white shadow-lg'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      Live WebSocket
-                    </button>
-                    <button
-                      onClick={() => setChartMode('tradingview')}
-                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                        chartMode === 'tradingview'
-                          ? 'bg-emerald-500 text-white shadow-lg'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      TradingView
-                    </button>
+            {(activeMobileView === 'chart' || !isMobile) && (
+              <>
+                <div className="px-4 lg:px-6 pt-4 lg:pt-6 pb-2 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-slate-400">Chart:</span>
+                      <div className="flex items-center gap-1 bg-slate-900/50 rounded-lg p-1">
+                        <button
+                          onClick={() => setChartMode('live')}
+                          className={`px-2 py-1.5 rounded-md text-[10px] lg:text-xs font-medium transition-all ${chartMode === 'live'
+                            ? 'bg-emerald-500 text-white shadow-lg'
+                            : 'text-slate-400 hover:text-white'
+                            }`}
+                        >
+                          WebSocket
+                        </button>
+                        <button
+                          onClick={() => setChartMode('tradingview')}
+                          className={`px-2 py-1.5 rounded-md text-[10px] lg:text-xs font-medium transition-all ${chartMode === 'tradingview'
+                            ? 'bg-emerald-500 text-white shadow-lg'
+                            : 'text-slate-400 hover:text-white'
+                            }`}
+                        >
+                          TradingView
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Connection Status */}
+                  <div className="flex items-center gap-3 text-[10px] lg:text-xs">
+                    <div className={`flex items-center gap-1.5 ${isCryptoConnected ? 'text-emerald-400' : 'text-slate-500'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${isCryptoConnected ? 'bg-emerald-500 animate-pulse' : 'bg-slate-600'}`}></span>
+                      <span>Crypto</span>
+                    </div>
+
+                    <div className={`flex items-center gap-1.5 ${isForexConnected ? 'text-blue-400' : 'text-slate-500'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${isForexConnected ? 'bg-blue-500 animate-pulse' : 'bg-slate-600'}`}></span>
+                      <span>Forex</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Connection Status */}
-              <div className="flex items-center gap-3 text-xs">
-                <div className={`flex items-center gap-2 ${isCryptoConnected ? 'text-emerald-400' : 'text-slate-500'}`}>
-                  <span className={`w-2 h-2 rounded-full ${isCryptoConnected ? 'bg-emerald-500 animate-pulse' : 'bg-slate-600'}`}></span>
-                  <span>Crypto {isCryptoConnected ? 'Live' : 'Offline'}</span>
+                {/* Chart Display */}
+                <div className="flex-1 px-4 lg:px-6 min-h-[350px] lg:min-h-0">
+                  {chartMode === 'live' ? (
+                    <LiveTradingChart
+                      symbol={selectedSymbol}
+                      assetType={selectedAssetType}
+                      height={isMobile ? 350 : 500}
+                    />
+                  ) : (
+                    <div className="h-full min-h-[400px] lg:min-h-0 bg-slate-900/30 rounded-lg border border-white/10 overflow-hidden">
+                      <TradingViewWidget
+                        symbol={tradingViewSymbol}
+                        interval="60"
+                        theme="dark"
+                        height="100%"
+                      />
+                    </div>
+                  )}
                 </div>
-                
-                <div className={`flex items-center gap-2 ${isForexConnected ? 'text-blue-400' : 'text-slate-500'}`}>
-                  <span className={`w-2 h-2 rounded-full ${isForexConnected ? 'bg-blue-500 animate-pulse' : 'bg-slate-600'}`}></span>
-                  <span>
-                    Forex {isForexConnected ? `Live (${forexSymbolCount})` : forexStatus === 'connecting' ? 'Connecting...' : 'Offline'}
-                  </span>
+
+                {/* Key Stats Grid */}
+                <div className="px-4 lg:px-6 py-4 grid grid-cols-3 gap-2 lg:gap-4">
+                  {keyStats.map((stat, idx) => (
+                    <div key={idx} className="bg-transparent border border-gray-800 rounded-lg p-3 lg:p-4">
+                      <div className="text-[10px] text-gray-500 mb-0.5 uppercase tracking-wider font-bold">{stat.label}</div>
+                      <div className="text-sm lg:text-lg font-semibold">{stat.value}</div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            </div>
+              </>
+            )}
 
-            {/* Chart Display */}
-            <div className="flex-1 px-6">
-              {chartMode === 'live' ? (
-                <LiveTradingChart
-                  symbol={selectedSymbol}
-                  assetType={selectedAssetType}
-                  height={500}
-                />
-              ) : (
-                <div className="h-full bg-slate-900/30 rounded-lg border border-white/10 overflow-hidden">
-                  <TradingViewWidget
-                    symbol={tradingViewSymbol}
-                    interval="60"
-                    theme="dark"
-                    height="100%"
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="px-6 pb-6">
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                {keyStats.map((stat, idx) => (
-                  <div key={idx} className="bg-transparent border border-gray-800 rounded-lg p-4">
-                    <div className="text-xs text-gray-500 mb-1">{stat.label}</div>
-                    <div className="text-lg font-semibold">{stat.value}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Open Orders Table */}
-              <div className="mb-6">
+            {/* Orders Section */}
+            {(activeMobileView === 'orders' || !isMobile) && (
+              <div className="px-4 lg:px-6 pb-6">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold">Open orders</h3>
-                  <span className="text-xs text-gray-500">{formattedOrders.length} working</span>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Open orders</h3>
+                  <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded uppercase font-bold">{formattedOrders.length} working</span>
                 </div>
-                <div className="bg-transparent border border-gray-800 rounded-lg overflow-hidden">
+                <div className="bg-transparent border border-gray-800 rounded-lg overflow-x-auto">
                   <table className="w-full text-xs">
-                    <thead className="bg-slate-950/50">
-                      <tr className="text-gray-400">
-                        <th className="text-left px-4 py-2 font-medium">Symbol</th>
-                        <th className="text-left px-4 py-2 font-medium">Qty</th>
-                        <th className="text-left px-4 py-2 font-medium">Price</th>
-                        <th className="text-left px-4 py-2 font-medium">Status</th>
-                        <th className="text-left px-4 py-2 font-medium">Filled</th>
-                        <th className="text-left px-4 py-2 font-medium">Type</th>
+                    <thead className="bg-slate-900/50">
+                      <tr className="text-gray-500 text-[10px] uppercase font-bold tracking-widest border-b border-gray-800">
+                        <th className="text-left px-4 py-3">Symbol</th>
+                        <th className="text-left px-4 py-3">Price</th>
+                        <th className="text-left px-4 py-3">Status</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-gray-800/50">
                       {formattedOrders.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="px-4 py-6 text-center text-gray-500">
+                          <td colSpan={3} className="px-4 py-8 text-center text-gray-500 italic">
                             No open orders
                           </td>
                         </tr>
                       ) : (
                         formattedOrders.map((order, idx) => (
-                          <tr key={idx} className="border-t border-gray-800 hover:bg-slate-950/30">
-                            <td className="px-4 py-3 font-medium">{order.symbol}</td>
-                            <td className="px-4 py-3 text-emerald-400">{order.qty}</td>
-                            <td className="px-4 py-3">{order.price}</td>
+                          <tr key={idx} className="hover:bg-white/5 transition-colors">
                             <td className="px-4 py-3">
-                              <span className="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded text-xs">
+                              <div className="font-bold text-slate-200">{order.symbol}</div>
+                              <div className="text-[10px] text-emerald-400 mt-0.5">{order.qty}</div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="font-semibold">{order.price}</div>
+                              <div className="text-[10px] text-slate-500 mt-0.5">{order.type}</div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-blue-500/20">
                                 {order.status}
                               </span>
                             </td>
-                            <td className="px-4 py-3">{order.filled}</td>
-                            <td className="px-4 py-3 text-gray-400">{order.type}</td>
                           </tr>
                         ))
                       )}
@@ -515,47 +569,45 @@ export default function Trading() {
                   </table>
                 </div>
               </div>
+            )}
 
-              {/* Positions Table */}
-              <div>
-                <h3 className="text-sm font-semibold mb-3">Positions</h3>
-                <div className="bg-transparent border border-gray-800 rounded-lg overflow-hidden">
+            {/* Positions Section */}
+            {(activeMobileView === 'positions' || !isMobile) && (
+              <div className="px-4 lg:px-6 pb-6">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-3">Positions</h3>
+                <div className="bg-transparent border border-gray-800 rounded-lg overflow-x-auto">
                   <table className="w-full text-xs">
-                    <thead className="bg-slate-950/50">
-                      <tr className="text-gray-400">
-                        <th className="text-left px-4 py-2 font-medium">Symbol</th>
-                        <th className="text-left px-4 py-2 font-medium">Qty</th>
-                        <th className="text-left px-4 py-2 font-medium">Avg price</th>
-                        <th className="text-left px-4 py-2 font-medium">Last</th>
-                        <th className="text-left px-4 py-2 font-medium">P/L</th>
-                        <th className="text-left px-4 py-2 font-medium">P/L (%/Profit)</th>
+                    <thead className="bg-slate-900/50">
+                      <tr className="text-gray-500 text-[10px] uppercase font-bold tracking-widest border-b border-gray-800">
+                        <th className="text-left px-4 py-3">Asset</th>
+                        <th className="text-left px-4 py-3 text-right">P/L</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-gray-800/50">
                       {formattedPositions.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="px-4 py-6 text-center text-gray-500">
+                          <td colSpan={2} className="px-4 py-8 text-center text-gray-500 italic">
                             No open positions
                           </td>
                         </tr>
                       ) : (
                         formattedPositions.map((pos, idx) => (
-                          <tr key={idx} className="border-t border-gray-800 hover:bg-slate-950/30">
-                            <td className="px-4 py-3 font-medium">{pos.symbol}</td>
-                            <td className="px-4 py-3">{pos.qty}</td>
-                            <td className="px-4 py-3">{pos.avgPrice}</td>
-                            <td className="px-4 py-3">{pos.last}</td>
-                            <td className={`px-4 py-3 font-medium ${
-                              pos.pl.includes('+') ? 'text-emerald-400' : 
-                              pos.pl === '-' ? 'text-gray-400' : 'text-red-400'
-                            }`}>
-                              {pos.pl}
+                          <tr key={idx} className="hover:bg-white/5 transition-colors">
+                            <td className="px-4 py-3">
+                              <div className="font-bold text-slate-200">{pos.symbol}</div>
+                              <div className="text-[10px] text-slate-500 mt-0.5">Avg: {pos.avgPrice} • Qty: {pos.qty}</div>
                             </td>
-                            <td className={`px-4 py-3 font-medium ${
-                              pos.plPercent.includes('+') ? 'text-emerald-400' : 
-                              pos.plPercent.includes('$') ? 'text-gray-400' : 'text-red-400'
-                            }`}>
-                              {pos.plPercent}
+                            <td className="px-4 py-3 text-right">
+                              <div className={`font-bold ${pos.pl.includes('+') ? 'text-emerald-400' :
+                                pos.pl === '-' ? 'text-gray-400' : 'text-red-400'
+                                }`}>
+                                {pos.pl}
+                              </div>
+                              <div className={`text-[10px] font-bold mt-0.5 ${pos.plPercent.includes('+') ? 'text-emerald-400/80' :
+                                pos.plPercent.includes('$') ? 'text-slate-500' : 'text-red-400/80'
+                                }`}>
+                                {pos.plPercent}
+                              </div>
                             </td>
                           </tr>
                         ))
@@ -564,14 +616,17 @@ export default function Trading() {
                   </table>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
-          <OrderTicket
-            symbol={selectedSymbol}
-            currentPrice={liveQuoteData?.price || 0}
-            assetType={selectedAssetType}
-          />
+          {/* Order Ticket - Side on desktop, bottom sheet style or fixed on mobile */}
+          <div className={`${isMobile ? 'border-t border-gray-800 bg-slate-950 pb-20' : 'w-80 border-l border-gray-800'}`}>
+            <OrderTicket
+              symbol={selectedSymbol}
+              currentPrice={liveQuoteData?.price || 0}
+              assetType={selectedAssetType}
+            />
+          </div>
         </div>
       </div>
     </div>

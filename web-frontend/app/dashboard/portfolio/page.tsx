@@ -578,7 +578,7 @@ export default function PortfolioDashboard() {
                 </div>
 
                 {/* Portfolio Summary Cards - NOW WITH LIVE DATA */}
-                <div className="grid grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     <SummaryCard label="Total Value" value={portfolioStats.totalValue} />
                     <SummaryCard label="Cash (USD)" value={portfolioStats.cashUSD} />
                     <SummaryCard
@@ -590,16 +590,14 @@ export default function PortfolioDashboard() {
                 </div>
 
                 {/* Main Content Grid */}
-                <div className="grid grid-cols-12 gap-6">
-                    {/* Left Column - Chart */}
-                    <div className="col-span-8">
-                     
-
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Left Column - Chart & Positions */}
+                    <div className="col-span-1 lg:col-span-8 space-y-6">
                         {/* Positions Table with LIVE PRICES */}
-                        <div className="bg-transparent rounded-lg border border-white/5 p-5">
-                            <div className="flex items-center justify-between mb-4">
+                        <div className="bg-transparent rounded-lg border border-white/5 p-4 lg:p-5 overflow-hidden">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
                                 <h2 className="text-lg font-bold text-white">Your Positions</h2>
-                                <div className="flex items-center gap-2 text-xs text-slate-400">
+                                <div className="flex items-center gap-2 text-[10px] lg:text-xs text-slate-400">
                                     {cryptoConnected && (
                                         <span className="flex items-center">
                                             <span className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse mr-1"></span>
@@ -614,16 +612,20 @@ export default function PortfolioDashboard() {
                                     )}
                                 </div>
                             </div>
-                            <PositionsTable positions={formattedPositions} />
+                            <div className="overflow-x-auto -mx-4 lg:mx-0">
+                                <div className="min-w-[600px] px-4 lg:px-0">
+                                    <PositionsTable positions={formattedPositions} />
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     {/* Right Column - Allocation & Risk */}
-                    <div className="col-span-4">
+                    <div className="col-span-1 lg:col-span-4 space-y-6">
                         {/* Allocation Section */}
 
                         {/* Risk & Insurance Section */}
-                        <div className="bg-transparent rounded-lg border border-white/5 p-5 mb-6">
+                        <div className="bg-transparent rounded-lg border border-white/5 p-4 lg:p-5">
                             <h2 className="text-lg font-bold mb-4 text-white">Risk & Insurance</h2>
 
                             <div className="space-y-4">
@@ -647,7 +649,7 @@ export default function PortfolioDashboard() {
                         </div>
 
                         {/* Recent Activity Section */}
-                        <div className="bg-transparent rounded-lg border border-white/5 p-5">
+                        <div className="bg-transparent rounded-lg border border-white/5 p-4 lg:p-5">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-lg font-bold text-white">Recent activity</h2>
                                 <button className="px-3 py-1 rounded bg-white/5 text-slate-400 text-xs font-medium hover:bg-white/10 hover:text-white">

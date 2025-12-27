@@ -91,13 +91,13 @@ export default function OpenAccountPage() {
         try {
             // Backend sets cookie on successful verification
             const result = await api.auth.verifyOTP(email, emailOtp)
-            
+
             if (result.success) {
                 setEmailVerified(true)
                 setError('')
                 return true
             }
-            
+
             setError('Invalid email OTP')
             return false
         } catch (err: any) {
@@ -115,13 +115,13 @@ export default function OpenAccountPage() {
             const fullPhoneNumber = `${countryCode}${phone}`
             // Backend sets cookie on successful verification
             const result = await api.auth.verifyOTP(fullPhoneNumber, phoneOtp)
-            
+
             if (result.success) {
                 setPhoneVerified(true)
                 setError('')
                 return true
             }
-            
+
             setError('Invalid phone OTP')
             return false
         } catch (err: any) {
@@ -243,26 +243,26 @@ export default function OpenAccountPage() {
     )
 
     return (
-        <div className="min-h-screen flex bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 py-10">
-            <div className="flex-1 flex items-center justify-center relative overflow-hidden p-6">
+        <div className="min-h-screen flex bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 py-4 lg:py-10">
+            <div className="flex-1 flex items-center justify-center relative overflow-hidden p-4 lg:p-6">
                 <div className="absolute top-20 left-20 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl animate-pulse" />
                 <div className="absolute bottom-20 right-20 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl animate-pulse delay-1000" />
 
                 <div className="relative w-full max-w-2xl z-50">
                     <Card className="shadow-2xl border border-white/10 bg-black/40 backdrop-blur-xl">
-                        <CardHeader className="space-y-1 text-center">
-                            <CardTitle className="text-3xl font-bold text-white">
+                        <CardHeader className="space-y-1 text-center p-4 lg:p-6">
+                            <CardTitle className="text-2xl lg:text-3xl font-bold text-white">
                                 {step === 'personal' && 'Create Account'}
                                 {step === 'verify' && 'Verify Contact Details'}
                                 {step === 'address' && 'Address Details'}
                                 {step === 'documents' && 'Upload Documents'}
                                 {step === 'avatar' && 'Profile Picture'}
                             </CardTitle>
-                            <CardDescription className="text-slate-400 text-base">
+                            <CardDescription className="text-slate-400 text-sm lg:text-base">
                                 Step {step === 'personal' ? 1 : step === 'verify' ? 2 : step === 'address' ? 3 : step === 'documents' ? 4 : 5} of 5
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-6">
+                        <CardContent className="space-y-6 p-4 lg:p-6">
                             {error && (
                                 <p className="text-sm text-red-400 bg-red-500/10 p-2 rounded border border-red-500/20 text-center">{error}</p>
                             )}
@@ -281,7 +281,7 @@ export default function OpenAccountPage() {
                                             autoComplete="name"
                                         />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="email" className="text-slate-300">Email</Label>
                                             <Input
@@ -368,7 +368,7 @@ export default function OpenAccountPage() {
                                                     value={emailOtp}
                                                     onChange={e => setEmailOtp(e.target.value)}
                                                     placeholder="Enter 6-digit code"
-                                                    className="bg-slate-900/50 border-white/10 text-white text-center text-2xl tracking-widest"
+                                                    className="bg-slate-900/50 border-white/10 text-white text-center text-xl lg:text-2xl tracking-widest"
                                                     maxLength={6}
                                                 />
                                                 <Button onClick={handleVerifyEmail} className="w-full bg-emerald-500 hover:bg-emerald-600">
@@ -390,7 +390,7 @@ export default function OpenAccountPage() {
                                                     value={phoneOtp}
                                                     onChange={e => setPhoneOtp(e.target.value)}
                                                     placeholder="Enter 6-digit code from SMS"
-                                                    className="bg-slate-900/50 border-white/10 text-white text-center text-2xl tracking-widest"
+                                                    className="bg-slate-900/50 border-white/10 text-white text-center text-xl lg:text-2xl tracking-widest"
                                                     maxLength={6}
                                                 />
                                                 <Button onClick={handleVerifyPhone} className="w-full bg-emerald-500 hover:bg-emerald-600">
@@ -420,7 +420,7 @@ export default function OpenAccountPage() {
                                         <Label className="text-slate-300">Address Line 2 (Optional)</Label>
                                         <Input value={address1} onChange={e => setAddress1(e.target.value)} className="bg-slate-900/50 border-white/10 text-white" />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label className="text-slate-300">City</Label>
                                             <Input value={city} onChange={e => setCity(e.target.value)} className="bg-slate-900/50 border-white/10 text-white" />
@@ -430,7 +430,7 @@ export default function OpenAccountPage() {
                                             <Input value={state} onChange={e => setState(e.target.value)} className="bg-slate-900/50 border-white/10 text-white" />
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label className="text-slate-300">Country</Label>
                                             <Input value={country} onChange={e => setCountry(e.target.value)} className="bg-slate-900/50 border-white/10 text-white" />
@@ -451,7 +451,7 @@ export default function OpenAccountPage() {
                                     {/* Identity Proof Section */}
                                     <div className="space-y-3">
                                         <Label className="text-slate-300 text-base font-semibold">Identity Proof (PAN Card)</Label>
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <FileUpload
                                                 label="Front"
                                                 file={identityFront}
@@ -468,7 +468,7 @@ export default function OpenAccountPage() {
                                     {/* Address Proof Section */}
                                     <div className="space-y-3">
                                         <Label className="text-slate-300 text-base font-semibold">Address Proof (Aadhaar Card)</Label>
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <FileUpload
                                                 label="Front"
                                                 file={addressProofFront}

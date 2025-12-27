@@ -58,7 +58,7 @@ export default function Wallet() {
                 api.user.getBalance(),
                 api.transactions.getAll({ page: 1, limit: 10 })
             ])
-            
+
             setBalance(balanceResult.userBalance)
             setTransactions(transactionsResult.transactions?.transactions || transactionsResult.data?.transactions || [])
         } catch (err: any) {
@@ -122,14 +122,13 @@ export default function Wallet() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 text-white">
-            <div className="max-w-[1200px] mx-auto p-6">
+            <div className="max-w-[1200px] mx-auto p-4 lg:p-6 pb-24">
                 {/* Header */}
                 <div className="mb-6">
                     <div className="flex items-center justify-between mb-2">
-                        <h1 className="text-2xl font-bold text-white">Wallet</h1>
-                      
+                        <h1 className="text-xl lg:text-2xl font-bold text-white">Wallet</h1>
                     </div>
-                    <p className="text-sm text-slate-400">Manage your wallet and transactions</p>
+                    <p className="text-xs lg:text-sm text-slate-400">Manage your wallet and transactions</p>
                 </div>
 
                 {/* Main Content */}
